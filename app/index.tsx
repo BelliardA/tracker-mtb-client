@@ -33,13 +33,17 @@ function Navigator() {
   return (
     <Stack.Navigator>
       {authState?.authenticated ? (
-        <Stack.Screen
+        <>  
+          <Stack.Screen
           name="Home"
           component={HomeScreen}
           options={{
             headerRight: () => <Button onPress={onLogout} title="Logout" />,
           }}
         />
+        <Stack.Screen name="DataSender" component={DataSender} />
+        </>
+        
       ) : (
         <Stack.Screen name="Login" component={Login} />
       )}
