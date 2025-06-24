@@ -71,7 +71,7 @@ export default function DataSender() {
 
     try {
       // adresse ip de l'ordinateur pour que expo Go puisse envoyer les données
-      const response = await fetch("http://192.168.1.148:5050/session", {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_URL_SERVEUR_API_DEV}/session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(session),
@@ -128,7 +128,7 @@ export default function DataSender() {
       const content = await FileSystem.readAsStringAsync(STORAGE_PATH);
       const session = JSON.parse(content);
 
-      const response = await fetch("http://192.168.1.148:5050/session", {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_URL_SERVEUR_API_DEV}/session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(session),
