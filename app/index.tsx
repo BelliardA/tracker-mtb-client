@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, Button } from 'react-native';
-import Barometre from './components/dataGetter/Barometre';
+import MapView from 'react-native-maps';
 import DataSender from './pages/DataSender';
 import Login from './pages/Login';
 import { AuthProvider, useAuth } from '../context/AuthContext';
@@ -23,6 +23,14 @@ export default function App() {
   return (
     <AuthProvider>
       <Navigator />
+      {/* <MapView
+        style={{ flex: 1 }}
+        initialRegion={{
+          latitude: 45.8745058,
+          longitude: 6.0014561,
+          latitudeDelta: 0.0922,
+          longitudeDelta: 0.0421,
+        }}></MapView> */}
     </AuthProvider>
   );
 }
