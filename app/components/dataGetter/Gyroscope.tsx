@@ -12,8 +12,9 @@ interface GyroProps {
 }
 
 export default function Gyro({ isRunning, setTrack }: GyroProps) {
-
-  const [subscription, setSubscription] = useState<ReturnType<typeof Gyroscope.addListener> | null>(null);
+  const [subscription, setSubscription] = useState<ReturnType<
+    typeof Gyroscope.addListener
+  > | null>(null);
 
   // Met à jour toutes les 50ms
   Gyroscope.setUpdateInterval(50);
@@ -32,7 +33,7 @@ export default function Gyro({ isRunning, setTrack }: GyroProps) {
 
   const _subscribe = () => {
     const sub = Gyroscope.addListener((gyroscopeData) => {
-      setTrack(prev => [...prev, gyroscopeData]); // ➕ Stockage de l'historique
+      setTrack((prev) => [...prev, gyroscopeData]); // ➕ Stockage de l'historique
     });
     setSubscription(sub);
   };
@@ -42,5 +43,5 @@ export default function Gyro({ isRunning, setTrack }: GyroProps) {
     setSubscription(null);
   };
 
-  return null
+  return null;
 }

@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, Platform } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Platform,
+} from 'react-native';
 import { Barometer, BarometerMeasurement } from 'expo-sensors';
 
 /**
@@ -12,10 +18,10 @@ interface BarometerProps {
   setTrack: React.Dispatch<React.SetStateAction<BarometerMeasurement[]>>;
 }
 
-
 export default function Barometre({ isRunning, setTrack }: BarometerProps) {
-
-  const [subscription, setSubscription] = useState<ReturnType<typeof Barometer.addListener> | null>(null);
+  const [subscription, setSubscription] = useState<ReturnType<
+    typeof Barometer.addListener
+  > | null>(null);
 
   useEffect(() => {
     if (isRunning) {
@@ -31,7 +37,7 @@ export default function Barometre({ isRunning, setTrack }: BarometerProps) {
 
   const subscribe = () => {
     const sub = Barometer.addListener((barometerData) => {
-      setTrack(prev => [...prev, barometerData]); // Store the history
+      setTrack((prev) => [...prev, barometerData]); // Store the history
     });
     setSubscription(sub);
   };
@@ -41,6 +47,5 @@ export default function Barometre({ isRunning, setTrack }: BarometerProps) {
     setSubscription(null);
   };
 
-  return null
-
+  return null;
 }

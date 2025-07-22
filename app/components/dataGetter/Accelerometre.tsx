@@ -12,9 +12,13 @@ interface AccelerometerProps {
   setTrack: React.Dispatch<React.SetStateAction<AccelerometerMeasurement[]>>;
 }
 
-export default function Accelerometre({ isRunning, setTrack }: AccelerometerProps) {
-
-  const [subscription, setSubscription] = useState<ReturnType<typeof Accelerometer.addListener> | null>(null);
+export default function Accelerometre({
+  isRunning,
+  setTrack,
+}: AccelerometerProps) {
+  const [subscription, setSubscription] = useState<ReturnType<
+    typeof Accelerometer.addListener
+  > | null>(null);
 
   Accelerometer.setUpdateInterval(50);
 
@@ -32,7 +36,7 @@ export default function Accelerometre({ isRunning, setTrack }: AccelerometerProp
 
   const _subscribe = () => {
     const sub = Accelerometer.addListener((accelerometerData) => {
-      setTrack(prev => [...prev, accelerometerData]); // Store the history
+      setTrack((prev) => [...prev, accelerometerData]); // Store the history
     });
     setSubscription(sub);
   };
@@ -42,7 +46,5 @@ export default function Accelerometre({ isRunning, setTrack }: AccelerometerProp
     setSubscription(null);
   };
 
-
   return null; // No UI component to render, just data tracking
-
 }

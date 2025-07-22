@@ -1,17 +1,17 @@
-import { useState } from "react";
-import { View, Text, Button, TextInput, StyleSheet } from "react-native";
-import { useAuth } from "../../context/AuthContext";
+import { useState } from 'react';
+import { View, Text, Button, TextInput, StyleSheet } from 'react-native';
+import { useAuth } from '../../context/AuthContext';
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const { onLogin, onRegister } = useAuth();
 
   const login = async () => {
     const result = await onLogin!(email, password);
     if (result && result.error) {
-      setError(result.msg || "Erreur de connexion");
+      setError(result.msg || 'Erreur de connexion');
     }
   };
 
@@ -53,28 +53,28 @@ const Login = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: 'center',
     padding: 20,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
   },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginBottom: 20,
-    textAlign: "center",
+    textAlign: 'center',
   },
   input: {
     height: 40,
-    borderColor: "#ccc",
+    borderColor: '#ccc',
     borderWidth: 1,
     marginBottom: 12,
     paddingHorizontal: 10,
     borderRadius: 5,
   },
   error: {
-    color: "red",
+    color: 'red',
     marginBottom: 10,
-    textAlign: "center",
+    textAlign: 'center',
   },
 });
 

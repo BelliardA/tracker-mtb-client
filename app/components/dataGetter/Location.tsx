@@ -44,8 +44,8 @@ const LocationTracker: React.FC<LocationTrackerProps> = ({
     return () => {
       if (interval) {
         clearInterval(interval);
+      }
     };
-  }
   }, [mode, isRunning, intervalMs, onLocationUpdate]);
 
   return null;

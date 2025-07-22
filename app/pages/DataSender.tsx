@@ -32,7 +32,7 @@ export default function DataSender() {
       setEndTime(new Date().toISOString());
     }
     setIsRunning(!isRunning);
-    console.log("isRunning:", !isRunning);
+    console.log('isRunning:', !isRunning);
   };
 
   const resetTrack = () => {
@@ -86,7 +86,6 @@ export default function DataSender() {
       console.error("❌ Erreur d'envoi :", error);
     }
   };
-
 
   const saveDataOffline = async () => {
     if (!startTime || !endTime) return;
@@ -171,15 +170,15 @@ export default function DataSender() {
       </View>
 
       <ScrollView style={{ flex: 1, paddingLeft: 20 }}>
-      <Localisation
-  mode="track"
-  isRunning={isRunning}
-  onLocationUpdate={(location) => {
-    // À chaque position reçue, on ajoute la position dans le tableau trackLocation
-    setTrackLocation((prev) => [...prev, location]);
-  }}
-  intervalMs={150} // ou la valeur que tu souhaites
-/>
+        <Localisation
+          mode="track"
+          isRunning={isRunning}
+          onLocationUpdate={(location) => {
+            // À chaque position reçue, on ajoute la position dans le tableau trackLocation
+            setTrackLocation((prev) => [...prev, location]);
+          }}
+          intervalMs={150} // ou la valeur que tu souhaites
+        />
         <Text style={{ fontWeight: 'bold', marginTop: 10 }}>
           Location Data:
         </Text>
