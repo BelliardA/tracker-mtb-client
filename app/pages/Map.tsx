@@ -1,98 +1,92 @@
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import MapView, { Polyline } from 'react-native-maps';
+import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
+import MapView, { Polyline, Marker } from 'react-native-maps';
 import { useAuth } from '@/context/AuthContext';
 
 export default function Map() {
-  const { authState } = useAuth(); // 👈 Récupère le token
-
+  const { authState } = useAuth();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [location, setLocation] =
-    useState<Location.LocationObjectCoords | null>(null);
-
+  const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
   const [tracks, setTracks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const mapRef = useRef<MapView | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      setHasPermission(status === 'granted');
-    })();
+  const fetchTracks = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_URL_SERVEUR_API_DEV}/session`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${authState?.token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const data = await response.json();
+      setTracks(data);
+      console.log('🔄 Pistes chargées :', data.length);
+    } catch (err) {
+      console.error('❌ Erreur récupération pistes :', err);
+    }
+  };
 
-    const fetchTracks = async () => {
+  useEffect(() => {
+    let subscriber: Location.LocationSubscription;
+
+    const loadEverything = async () => {
       try {
-        const response = await fetch(
-          `${process.env.EXPO_PUBLIC_URL_SERVEUR_API_DEV}/session`,
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setHasPermission(false);
+          return;
+        }
+        setHasPermission(true);
+
+        // Suivi position
+        subscriber = await Location.watchPositionAsync(
           {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${authState?.token}`, // 👈 Ajout du token
-              'Content-Type': 'application/json',
-            },
+            accuracy: Location.Accuracy.Highest,
+            timeInterval: 1000,
+            distanceInterval: 1,
+          },
+          (location) => {
+            setLocation(location.coords);
+            mapRef.current?.animateCamera({
+              center: {
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+              },
+              zoom: 16,
+            });
           }
         );
-        const data = await response.json();
-        setTracks(data);
-      } catch (err) {
-        console.error('❌ Erreur récupération pistes :', err);
+
+        await fetchTracks();
+      } catch (error) {
+        console.error('❌ Erreur chargement initial :', error);
+      } finally {
+        setLoading(false);
       }
     };
-    // Récupération des pistes à l'initialisation
-    fetchTracks();
+
+    loadEverything();
+
+    return () => {
+      if (subscriber) subscriber.remove();
+    };
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      if (hasPermission) {
-        if (tracks.length > 0 && mapRef.current) {
-          const firstTrack = tracks[0];
-          const firstPoint = firstTrack.sensors.gps?.[0];
-          if (firstPoint?.latitude && firstPoint?.longitude) {
-            mapRef.current.animateCamera({
-              center: {
-                latitude: firstPoint.latitude,
-                longitude: firstPoint.longitude,
-              },
-              zoom: 15,
-            });
-            return;
-          }
-        }
-        const loc = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        });
-        setLocation(loc.coords);
-        mapRef.current?.animateCamera({
-          center: {
-            latitude: loc.coords.latitude,
-            longitude: loc.coords.longitude,
-          },
-          zoom: 15,
-        });
-      }
-    })();
-  }, [hasPermission, tracks]);
-
-  useEffect(() => {
-    if (tracks.length > 0 && mapRef.current) {
-      const firstTrack = tracks[0];
-      const firstPoint = firstTrack.sensors.gps?.[0];
-      if (firstPoint?.latitude && firstPoint?.longitude) {
-        mapRef.current.animateCamera({
-          center: {
-            latitude: firstPoint.latitude,
-            longitude: firstPoint.longitude,
-          },
-          zoom: 15,
-        });
-      }
-    }
-  }, [tracks]);
-
-  if (hasPermission === null) return <Text>Demande de permission...</Text>;
-  if (!hasPermission) return <Text>Permission refusée</Text>;
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>Chargement des données...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -105,22 +99,64 @@ export default function Map() {
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
         }}
-      />
-      {tracks.map((track, index) => (
-        <Polyline
-          key={index}
-          coordinates={track.sensors.gps.map((point: any) => ({
-            latitude: point.latitude,
-            longitude: point.longitude,
-          }))}
-          strokeColor="#FFFF00"
-          strokeWidth={3}
-        />
-      ))}
+      >
+        {location && (
+          <Marker
+            coordinate={{
+              latitude: location.latitude,
+              longitude: location.longitude,
+            }}
+            title="Vous êtes ici"
+            pinColor="blue"
+          />
+        )}
+        {tracks.map((track, index) => (
+          <Polyline
+            key={index}
+            coordinates={track.sensors.gps.map((point: any) => ({
+              latitude: point.latitude,
+              longitude: point.longitude,
+            }))}
+            strokeColor="#FF0000"
+            strokeWidth={4}
+          />
+        ))}
+      </MapView>
+      <View style={styles.recenterButtonContainer}>
+        <Text
+          style={styles.recenterButton}
+          onPress={() => {
+            if (location) {
+              mapRef.current?.animateCamera({
+                center: {
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                },
+                zoom: 13,
+              });
+            }
+          }}
+        >
+          🔄 Recentrer
+        </Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  recenterButtonContainer: {
+    position: 'absolute',
+    bottom: 100,
+    right: 20,
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 8,
+    elevation: 3,
+  },
+  recenterButton: {
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, View, Text, Button } from 'react-native';
+import { Alert, ScrollView, View, Text, Button } from 'react-native';
 import Barometre from '../components/dataGetter/Barometre';
 import Gyro from '../components/dataGetter/Gyroscope';
 import Accelerometre from '../components/dataGetter/Accelerometre';
@@ -11,8 +11,12 @@ import {
 } from 'expo-sensors';
 import { LocationObject } from 'expo-location';
 import * as FileSystem from 'expo-file-system';
+import { useAuth } from '@/context/AuthContext';
 
 export default function DataSender() {
+  const { authState } = useAuth();
+  const token = authState?.token;
+
   const [isRunning, setIsRunning] = useState(false);
   const [startTime, setStartTime] = useState<string | null>(null);
   const [endTime, setEndTime] = useState<string | null>(null);
@@ -76,12 +80,29 @@ export default function DataSender() {
         `${process.env.EXPO_PUBLIC_URL_SERVEUR_API_DEV}/session`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`, // <-- Ajout du token ici
+          },
           body: JSON.stringify(session),
         }
       );
       const result = await response.json();
       console.log('✅ Session envoyée :', result);
+
+      Alert.alert(
+        'Succès',
+        'Session envoyée avec succès !',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              resetTrack(); // Reset des données comme avec le bouton Reset Track
+            },
+          },
+        ],
+        { cancelable: false }
+      );
     } catch (error) {
       console.error("❌ Erreur d'envoi :", error);
     }
