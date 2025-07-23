@@ -1,54 +1,54 @@
-import { useEffect, useRef } from 'react';
-import * as Location from 'expo-location';
-import { LocationObject } from 'expo-location';
+import { useEffect, useRef } from "react";
+import * as Location from "expo-location";
 
-type Mode = 'track' | 'onlyOnce';
-
-interface LocationTrackerProps {
-  mode: Mode;
+interface LocalisationProps {
   isRunning: boolean;
-  onLocationUpdate: (location: LocationObject) => void;
-  intervalMs?: number; // Pour pouvoir custom l'interval si tu veux
+  onLocationUpdate: (location: Location.LocationObject) => void;
+  intervalMs?: number;
 }
 
-const LocationTracker: React.FC<LocationTrackerProps> = ({
-  mode,
+export default function Localisation({
   isRunning,
   onLocationUpdate,
   intervalMs = 150,
-}) => {
-  const intervalRef = useRef<number | null>(null);
+}: LocalisationProps) {
+  const locationSubscription = useRef<Location.LocationSubscription | null>(null);
 
   useEffect(() => {
-    let interval: number | null = null;
+    let isMounted = true;
 
-    const getLocation = async () => {
+    const startTracking = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        console.log('Permission to access location was denied');
+      if (status !== "granted") {
+        console.warn("⛔ Permission denied for location");
         return;
       }
 
-      const location = await Location.getCurrentPositionAsync({});
-      onLocationUpdate(location);
-    };
-
-    if (mode === 'onlyOnce') {
-      getLocation();
-    } else if (mode === 'track' && isRunning) {
-      interval = setInterval(() => {
-        getLocation();
-      }, intervalMs);
-    }
-
-    return () => {
-      if (interval) {
-        clearInterval(interval);
+      if (isRunning && isMounted) {
+        locationSubscription.current = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.Highest,
+            timeInterval: intervalMs,
+            distanceInterval: 0, // 0 pour que ça déclenche même sans déplacement
+          },
+          (location) => {
+            console.log("📍 Nouvelle position : ", location);
+            onLocationUpdate(location);
+          }
+        );
       }
     };
-  }, [mode, isRunning, intervalMs, onLocationUpdate]);
+
+    startTracking();
+
+    return () => {
+      isMounted = false;
+      if (locationSubscription.current) {
+        locationSubscription.current.remove();
+        locationSubscription.current = null;
+      }
+    };
+  }, [isRunning, intervalMs]);
 
   return null;
-};
-
-export default LocationTracker;
+}

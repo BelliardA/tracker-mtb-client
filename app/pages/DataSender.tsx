@@ -171,10 +171,8 @@ export default function DataSender() {
 
       <ScrollView style={{ flex: 1, paddingLeft: 20 }}>
         <Localisation
-          mode="track"
           isRunning={isRunning}
           onLocationUpdate={(location) => {
-            // À chaque position reçue, on ajoute la position dans le tableau trackLocation
             setTrackLocation((prev) => [...prev, location]);
           }}
           intervalMs={150} // ou la valeur que tu souhaites
