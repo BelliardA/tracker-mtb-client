@@ -10,8 +10,20 @@ export default function Map() {
   const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
   const [tracks, setTracks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [shouldCenter, setShouldCenter] = useState(true);
+  const inactivityTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const mapRef = useRef<MapView | null>(null);
+
+    // Reset centering timer whenever user interacts
+    const handleUserInteraction = () => {
+      setShouldCenter(false);
+      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+      inactivityTimer.current = setTimeout(() => {
+        setShouldCenter(true);
+      }, 30000);
+    };
+  
 
   const fetchTracks = async () => {
     try {
@@ -53,13 +65,15 @@ export default function Map() {
           },
           (location) => {
             setLocation(location.coords);
-            mapRef.current?.animateCamera({
-              center: {
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-              },
-              zoom: 16,
-            });
+            if (shouldCenter) {
+              mapRef.current?.animateCamera({
+                center: {
+                  latitude: location.coords.latitude,
+                  longitude: location.coords.longitude,
+                },
+                zoom: 16,
+              });
+            }
           }
         );
 
@@ -75,8 +89,9 @@ export default function Map() {
 
     return () => {
       if (subscriber) subscriber.remove();
+      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
     };
-  }, []);
+  }, [shouldCenter]);
 
   if (loading) {
     return (
@@ -91,6 +106,8 @@ export default function Map() {
     <View style={styles.container}>
       <MapView
         ref={mapRef}
+        onTouchStart={handleUserInteraction}
+        onPanDrag={handleUserInteraction}
         style={StyleSheet.absoluteFillObject}
         initialRegion={{
           latitude: location?.latitude ?? 46.2044,
