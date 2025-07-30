@@ -21,9 +21,24 @@ export default function Map() {
       if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
         setShouldCenter(true);
-      }, 30000);
+      }, 60000);
     };
   
+      // Focus and zoom the map to fit the entire track
+  const handleTrackPress = (track: any) => {
+    // Extract coordinates from the track
+    const coords = track.sensors.gps.map((point: any) => ({
+      latitude: point.latitude,
+      longitude: point.longitude,
+    }));
+    if (coords.length > 0) {
+      mapRef.current?.fitToCoordinates(coords, {
+        edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+        animated: true,
+      });
+    }
+  };
+
 
   const fetchTracks = async () => {
     try {
@@ -129,6 +144,8 @@ export default function Map() {
         {tracks.map((track, index) => (
           <Polyline
             key={index}
+            tappable
+            onPress={() => handleTrackPress(track)}
             coordinates={track.sensors.gps.map((point: any) => ({
               latitude: point.latitude,
               longitude: point.longitude,
