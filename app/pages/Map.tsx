@@ -1,8 +1,8 @@
+import { useAuth } from '@/context/AuthContext';
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
-import MapView, { Polyline, Marker } from 'react-native-maps';
-import { useAuth } from '@/context/AuthContext';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 
 export default function Map() {
   const { authState } = useAuth();
@@ -45,7 +45,6 @@ export default function Map() {
         }
         setHasPermission(true);
 
-        // Suivi position
         subscriber = await Location.watchPositionAsync(
           {
             accuracy: Location.Accuracy.Highest,
