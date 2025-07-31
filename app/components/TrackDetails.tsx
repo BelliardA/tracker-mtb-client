@@ -1,4 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import {
   Animated,
   Dimensions,
@@ -19,7 +25,14 @@ const SNAP_TOP = SCREEN_HEIGHT * 0.8;
 const SNAP_MIDDLE = SCREEN_HEIGHT * 0.3;
 const SNAP_CLOSED = 0;
 
-export default function TrackDetails({ visible, trackId, onClose }: TrackDetailsProps) {
+export interface TrackDetailsRef {
+  closeSheet: () => void;
+}
+
+function TrackDetailsInner(
+  { visible, trackId, onClose }: TrackDetailsProps,
+  ref: React.Ref<TrackDetailsRef>
+) {
   const animatedHeight = useRef(new Animated.Value(SNAP_CLOSED)).current;
   const lastSnapPoint = useRef(SNAP_CLOSED);
   const [isVisible, setIsVisible] = useState(false);
@@ -37,6 +50,10 @@ export default function TrackDetails({ visible, trackId, onClose }: TrackDetails
       }
     });
   };
+
+  useImperativeHandle(ref, () => ({
+    closeSheet: () => animateTo(SNAP_CLOSED),
+  }));
 
   const panResponder = useRef(
     PanResponder.create({
@@ -81,6 +98,8 @@ export default function TrackDetails({ visible, trackId, onClose }: TrackDetails
     </Animated.View>
   );
 }
+
+export default forwardRef(TrackDetailsInner);
 
 const styles = StyleSheet.create({
   container: {

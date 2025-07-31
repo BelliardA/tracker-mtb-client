@@ -3,7 +3,7 @@ import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
-import TrackDetails from '../components/TrackDetails';
+import TrackDetails, { TrackDetailsRef } from '../components/TrackDetails';
 
 export default function Map() {
   const { authState } = useAuth();
@@ -17,6 +17,7 @@ export default function Map() {
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
 
   const mapRef = useRef<MapView | null>(null);
+  const trackDetailsRef = useRef<TrackDetailsRef>(null);
 
   // Reset centering timer whenever user interacts
   const handleUserInteraction = () => {
@@ -126,6 +127,11 @@ export default function Map() {
         ref={mapRef}
         onTouchStart={handleUserInteraction}
         onPanDrag={handleUserInteraction}
+        onPress={() => {
+          if (selectedTrackId !== null) {
+                        trackDetailsRef.current?.closeSheet();
+          }
+        }}
         style={StyleSheet.absoluteFillObject}
         initialRegion={{
           latitude: location?.latitude ?? 46.2044,
@@ -178,6 +184,7 @@ export default function Map() {
       </View>
       {selectedTrackId != null && (
         <TrackDetails
+        ref={trackDetailsRef}
         trackId={selectedTrackId}
         visible={selectedTrackId !== null}
         onClose={() => setSelectedTrackId(null)}
