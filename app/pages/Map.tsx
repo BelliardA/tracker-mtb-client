@@ -1,5 +1,7 @@
+import { colors } from '@/app';
 import { useAuth } from '@/context/AuthContext';
 import * as Location from 'expo-location';
+import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
@@ -115,7 +117,7 @@ export default function Map() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color={colors.accent} />
         <Text>Chargement des données...</Text>
       </View>
     );
@@ -129,7 +131,7 @@ export default function Map() {
         onPanDrag={handleUserInteraction}
         onPress={() => {
           if (selectedTrackId !== null) {
-                        trackDetailsRef.current?.closeSheet();
+            trackDetailsRef.current?.closeSheet();
           }
         }}
         style={StyleSheet.absoluteFillObject}
@@ -159,36 +161,33 @@ export default function Map() {
               latitude: point.latitude,
               longitude: point.longitude,
             }))}
-            strokeColor="#FF0000"
+            strokeColor={colors.secondary}
             strokeWidth={4}
           />
         ))}
       </MapView>
-      <View style={styles.recenterButtonContainer}>
+      <View style={styles.fabContainer}>
         <Text
-          style={styles.recenterButton}
+          style={styles.fab}
           onPress={() => {
-            if (location) {
-              mapRef.current?.animateCamera({
-                center: {
-                  latitude: location.latitude,
-                  longitude: location.longitude,
-                },
-                zoom: 13,
-              });
-            }
+            // Redirection vers DataSender
+            // Attention : nécessite que tu sois dans une navigation stack
+            // et que DataSender soit bien déclaré comme screen
+            // Si ce n’est pas le cas, tu peux remplacer ceci par un Router.push
+            // ou équivalent selon ta structure
+            router.push('/pages/DataSender');
           }}
         >
-          🔄 Recentrer
+          +
         </Text>
       </View>
       {selectedTrackId != null && (
         <TrackDetails
-        ref={trackDetailsRef}
-        trackId={selectedTrackId}
-        visible={selectedTrackId !== null}
-        onClose={() => setSelectedTrackId(null)}
-      />
+          ref={trackDetailsRef}
+          trackId={selectedTrackId}
+          visible={selectedTrackId !== null}
+          onClose={() => setSelectedTrackId(null)}
+        />
       )}
     </View>
   );
@@ -208,5 +207,23 @@ const styles = StyleSheet.create({
   recenterButton: {
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  fabContainer: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    backgroundColor: colors.accent,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+  },
+  fab: {
+    color: colors.background,
+    fontSize: 48,
+    lineHeight: 48,
+    fontWeight: 'bold',
   },
 });
