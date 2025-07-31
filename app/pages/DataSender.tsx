@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Alert, ScrollView, View, Text, Button } from 'react-native';
-import Barometre from '../components/dataGetter/Barometre';
-import Gyro from '../components/dataGetter/Gyroscope';
-import Accelerometre from '../components/dataGetter/Accelerometre';
-import Localisation from '../components/dataGetter/Location';
+import { useAuth } from '@/context/AuthContext';
+import * as FileSystem from 'expo-file-system';
+import { LocationObject } from 'expo-location';
 import {
   AccelerometerMeasurement,
   BarometerMeasurement,
   GyroscopeMeasurement,
 } from 'expo-sensors';
-import { LocationObject } from 'expo-location';
-import * as FileSystem from 'expo-file-system';
-import { useAuth } from '@/context/AuthContext';
+import React, { useEffect, useState } from 'react';
+import { Alert, Button, ScrollView, Text, View } from 'react-native';
+import Accelerometre from '../components/dataGetter/Accelerometre';
+import Barometre from '../components/dataGetter/Barometre';
+import Gyro from '../components/dataGetter/Gyroscope';
+import Localisation from '../components/dataGetter/Location';
 
 export default function DataSender() {
   const { authState } = useAuth();

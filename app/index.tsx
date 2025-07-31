@@ -1,10 +1,10 @@
-import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Button, View, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import Map from './pages/Map';
+import { View } from 'react-native';
+import 'react-native-gesture-handler';
+import { AuthProvider, useAuth } from '../context/AuthContext';
 import DataSender from './pages/DataSender';
 import Login from './pages/Login';
-import { AuthProvider, useAuth } from '../context/AuthContext';
+import Map from './pages/Map';
 
 const Tab = createBottomTabNavigator();
 
@@ -52,8 +52,8 @@ function AppContainer() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContainer />
-    </AuthProvider>
+      <AuthProvider>
+        <AppContainer />
+      </AuthProvider>
   );
 }

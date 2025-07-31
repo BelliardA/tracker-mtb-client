@@ -3,30 +3,34 @@ import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
+import TrackDetails from '../components/TrackDetails';
 
 export default function Map() {
   const { authState } = useAuth();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
+  const [location, setLocation] =
+    useState<Location.LocationObjectCoords | null>(null);
   const [tracks, setTracks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [shouldCenter, setShouldCenter] = useState(true);
   const inactivityTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
 
   const mapRef = useRef<MapView | null>(null);
 
-    // Reset centering timer whenever user interacts
-    const handleUserInteraction = () => {
-      setShouldCenter(false);
-      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
-      inactivityTimer.current = setTimeout(() => {
-        setShouldCenter(true);
-      }, 60000);
-    };
-  
-      // Focus and zoom the map to fit the entire track
+  // Reset centering timer whenever user interacts
+  const handleUserInteraction = () => {
+    setShouldCenter(false);
+    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    inactivityTimer.current = setTimeout(() => {
+      setShouldCenter(true);
+    }, 60000);
+  };
+
+  // Focus and zoom the map to fit the entire track
   const handleTrackPress = (track: any) => {
     // Extract coordinates from the track
+    setSelectedTrackId(track._id);
     const coords = track.sensors.gps.map((point: any) => ({
       latitude: point.latitude,
       longitude: point.longitude,
@@ -38,7 +42,6 @@ export default function Map() {
       });
     }
   };
-
 
   const fetchTracks = async () => {
     try {
@@ -173,6 +176,13 @@ export default function Map() {
           🔄 Recentrer
         </Text>
       </View>
+      {selectedTrackId != null && (
+        <TrackDetails
+        trackId={selectedTrackId}
+        visible={selectedTrackId !== null}
+        onClose={() => setSelectedTrackId(null)}
+      />
+      )}
     </View>
   );
 }
