@@ -17,7 +17,8 @@
       "adaptiveIcon": {
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.tutur_the_chop.trackerapp"
     },
     "web": {
       "bundler": "metro",
@@ -37,6 +38,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2782c999-e42a-4513-813d-759f2b0efbb5"
+      }
     }
   }
 }
