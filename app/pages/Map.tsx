@@ -1,4 +1,4 @@
-import { colors } from '@/app';
+import { colors } from '@/app/styles/colors';
 import { useAuth } from '@/context/AuthContext';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';

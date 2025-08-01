@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Accelerometer, AccelerometerMeasurement } from 'expo-sensors';
+import { useEffect, useState } from 'react';
 
 /**
  * Accelerometre component that tracks and displays accelerometer data.

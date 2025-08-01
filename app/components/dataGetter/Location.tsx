@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
 import * as Location from "expo-location";
+import { useEffect, useRef } from "react";
 
 interface LocalisationProps {
   isRunning: boolean;
@@ -32,7 +32,6 @@ export default function Localisation({
             distanceInterval: 0, // 0 pour que ça déclenche même sans déplacement
           },
           (location) => {
-            console.log("📍 Nouvelle position : ", location);
             onLocationUpdate(location);
           }
         );
