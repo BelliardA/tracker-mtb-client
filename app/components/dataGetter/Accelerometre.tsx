@@ -1,5 +1,5 @@
 import { Accelerometer, AccelerometerMeasurement } from 'expo-sensors';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 /**
  * Accelerometre component that tracks and displays accelerometer data.
@@ -15,35 +15,30 @@ export default function Accelerometre({
   isRunning,
   setTrack,
 }: AccelerometerProps) {
-  const [subscription, setSubscription] = useState<ReturnType<
-    typeof Accelerometer.addListener
-  > | null>(null);
+  const subscription = useRef<ReturnType<typeof Accelerometer.addListener> | null>(
+    null
+  );
 
   Accelerometer.setUpdateInterval(50);
 
   useEffect(() => {
-    if (isRunning) {
-      _subscribe();
-    } else {
-      _unsubscribe();
+    if (!isRunning) {
+      subscription.current?.remove();
+      subscription.current = null;
+      return;
     }
 
-    return () => {
-      _unsubscribe();
-    };
-  }, [isRunning]);
-
-  const _subscribe = () => {
+   
     const sub = Accelerometer.addListener((accelerometerData) => {
-      setTrack((prev) => [...prev, accelerometerData]); // Store the history
+      setTrack((prev) => [...prev, accelerometerData]);
     });
-    setSubscription(sub);
-  };
+    subscription.current = sub;
 
-  const _unsubscribe = () => {
-    subscription?.remove();
-    setSubscription(null);
-  };
+    return () => {
+      sub.remove();
+      subscription.current = null;
+    };
+  }, [isRunning, setTrack]);
 
   return null; // No UI component to render, just data tracking
 }

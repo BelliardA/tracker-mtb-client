@@ -1,5 +1,6 @@
 import React, {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useRef,
@@ -37,19 +38,22 @@ function TrackDetailsInner(
   const lastSnapPoint = useRef(SNAP_CLOSED);
   const [isVisible, setIsVisible] = useState(false);
 
-  const animateTo = (value: number) => {
-    Animated.timing(animatedHeight, {
-      toValue: value,
-      duration: 300,
-      useNativeDriver: false,
-    }).start(() => {
-      lastSnapPoint.current = value;
-      if (value === SNAP_CLOSED) {
-        setIsVisible(false);
-        onClose();
-      }
-    });
-  };
+  const animateTo = useCallback(
+    (value: number) => {
+      Animated.timing(animatedHeight, {
+        toValue: value,
+        duration: 300,
+        useNativeDriver: false,
+      }).start(() => {
+        lastSnapPoint.current = value;
+        if (value === SNAP_CLOSED) {
+          setIsVisible(false);
+          onClose();
+        }
+      });
+    },
+    [animatedHeight, onClose]
+  );
 
   useImperativeHandle(ref, () => ({
     closeSheet: () => animateTo(SNAP_CLOSED),
@@ -85,7 +89,7 @@ function TrackDetailsInner(
     } else {
       animateTo(SNAP_CLOSED);
     }
-  }, [visible]);
+  }, [visible, animateTo]);
 
   if (!isVisible) return null;
 

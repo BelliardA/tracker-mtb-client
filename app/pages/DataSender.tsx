@@ -24,19 +24,6 @@ import Localisation from '../components/dataGetter/Location';
 
 export default function DataSender() {
   const { authState } = useAuth();
-
-  console.log(authState);
-
-  if (authState?.loading) {
-    return <Text>Chargement de l’authentification…</Text>;
-  }
-
-  if (!authState?.authenticated || !authState.token) {
-    return <Text>Utilisateur non authentifié</Text>;
-  }
-
-  const token = authState.token;
-
   const router = useRouter();
 
   const [screen, setScreen] = useState<'start' | 'tracking' | 'end'>('start');
@@ -103,7 +90,7 @@ export default function DataSender() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${authState?.token}`,
           },
           body: JSON.stringify(session),
         }
@@ -128,37 +115,40 @@ export default function DataSender() {
     }
   };
 
-  const sendOfflineDataIfExists = async () => {
-    const fileInfo = await FileSystem.getInfoAsync(STORAGE_PATH);
-    if (!fileInfo.exists) return;
-
-    try {
-      const content = await FileSystem.readAsStringAsync(STORAGE_PATH);
-      const session = JSON.parse(content);
-
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_URL_SERVEUR_API_DEV}/session`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(session),
-        }
-      );
-
-      const result = await response.json();
-      console.log('✅ Session offline envoyée :', result);
-      await FileSystem.deleteAsync(STORAGE_PATH);
-    } catch (error) {
-      console.error("❌ Échec d'envoi de la session offline :", error);
-    }
-  };
 
   useEffect(() => {
+    const sendOfflineDataIfExists = async () => {
+      if (!authState?.token) {
+        return;
+      }
+      const fileInfo = await FileSystem.getInfoAsync(STORAGE_PATH);
+      if (!fileInfo.exists) return;
+
+      try {
+        const content = await FileSystem.readAsStringAsync(STORAGE_PATH);
+        const session = JSON.parse(content);
+
+        const response = await fetch(
+          `${process.env.EXPO_PUBLIC_URL_SERVEUR_API_DEV}/session`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${authState?.token}`,
+            },
+            body: JSON.stringify(session),
+          }
+        );
+
+        const result = await response.json();
+        console.log('✅ Session offline envoyée :', result);
+        await FileSystem.deleteAsync(STORAGE_PATH);
+      } catch (error) {
+        console.error("❌ Échec d'envoi de la session offline :", error);
+      }
+    };
     sendOfflineDataIfExists();
-  }, []);
+  }, [STORAGE_PATH, authState?.token]);
 
   const getCurrentSpeed = () => {
     const latest = trackLocation.at(-1);
@@ -189,6 +179,13 @@ export default function DataSender() {
 
     return Math.round(angle - (initialInclinaison ?? angle));
   };
+  if (authState?.loading) {
+    return <Text>Chargement de l’authentification…</Text>;
+  }
+
+  if (!authState?.authenticated || !authState.token) {
+    return <Text>Utilisateur non authentifié</Text>;
+  }
 
   return (
     <View style={styles.container}>

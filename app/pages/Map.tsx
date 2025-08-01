@@ -2,16 +2,16 @@ import { colors } from '@/app/styles/colors';
 import { useAuth } from '@/context/AuthContext';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import TrackDetails, { TrackDetailsRef } from '../components/TrackDetails';
 
 export default function Map() {
   const { authState } = useAuth();
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [location, setLocation] =
-    useState<Location.LocationObjectCoords | null>(null);
+  const [location, setLocation] = useState<Location.LocationObjectCoords | null>(
+    null
+  );
   const [tracks, setTracks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [shouldCenter, setShouldCenter] = useState(true);
@@ -44,9 +44,9 @@ export default function Map() {
         animated: true,
       });
     }
-  };
+  }
 
-  const fetchTracks = async () => {
+  const fetchTracks = useCallback(async () => {
     try {
       const response = await fetch(
         `${process.env.EXPO_PUBLIC_URL_SERVEUR_API_DEV}/session`,
@@ -64,7 +64,7 @@ export default function Map() {
     } catch (err) {
       console.error('❌ Erreur récupération pistes :', err);
     }
-  };
+  }, [authState?.token]);
 
   useEffect(() => {
     let subscriber: Location.LocationSubscription;
@@ -73,10 +73,8 @@ export default function Map() {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
-          setHasPermission(false);
           return;
         }
-        setHasPermission(true);
 
         subscriber = await Location.watchPositionAsync(
           {
@@ -112,7 +110,7 @@ export default function Map() {
       if (subscriber) subscriber.remove();
       if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
     };
-  }, [shouldCenter]);
+  }, [shouldCenter, fetchTracks]);
 
   if (loading) {
     return (

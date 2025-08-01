@@ -49,7 +49,7 @@ export default function Localisation({
         locationSubscription.current = null;
       }
     };
-  }, [isRunning, intervalMs]);
+  }, [isRunning, intervalMs, onLocationUpdate]);
 
   return null;
 }

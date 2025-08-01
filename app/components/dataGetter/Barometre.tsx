@@ -1,12 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  Platform,
-} from 'react-native';
 import { Barometer, BarometerMeasurement } from 'expo-sensors';
+import React, { useEffect, useRef } from 'react';
 
 /**
  * Barometre component that tracks and displays barometric pressure and relative altitude.
@@ -19,33 +12,27 @@ interface BarometerProps {
 }
 
 export default function Barometre({ isRunning, setTrack }: BarometerProps) {
-  const [subscription, setSubscription] = useState<ReturnType<
-    typeof Barometer.addListener
-  > | null>(null);
+  const subscription = useRef<ReturnType<typeof Barometer.addListener> | null>(
+    null
+  );
 
   useEffect(() => {
-    if (isRunning) {
-      subscribe();
-    } else {
-      unsubscribe();
+    if (!isRunning) {
+      subscription.current?.remove();
+      subscription.current = null;
+      return;
     }
 
-    return () => {
-      unsubscribe();
-    };
-  }, [isRunning]);
-
-  const subscribe = () => {
     const sub = Barometer.addListener((barometerData) => {
-      setTrack((prev) => [...prev, barometerData]); // Store the history
+      setTrack((prev) => [...prev, barometerData]);
     });
-    setSubscription(sub);
-  };
+    subscription.current = sub;
 
-  const unsubscribe = () => {
-    subscription?.remove();
-    setSubscription(null);
-  };
+    return () => {
+      sub.remove();
+      subscription.current = null;
+    };
+  }, [isRunning, setTrack]);
 
   return null;
 }
