@@ -24,7 +24,19 @@ import Localisation from '../components/dataGetter/Location';
 
 export default function DataSender() {
   const { authState } = useAuth();
-  const token = authState?.token;
+
+  console.log(authState);
+
+  if (authState?.loading) {
+    return <Text>Chargement de l’authentification…</Text>;
+  }
+  
+  if (!authState?.authenticated || !authState.token) {
+    return <Text>Utilisateur non authentifié</Text>;
+  }
+  
+  const token = authState.token;
+
   const router = useRouter();
 
   const [screen, setScreen] = useState<'start' | 'tracking' | 'end'>('start');
@@ -82,8 +94,6 @@ export default function DataSender() {
         })),
       },
     };
-
-    console.log('📦 Session à envoyer :', session);
 
     try {
       const response = await fetch(

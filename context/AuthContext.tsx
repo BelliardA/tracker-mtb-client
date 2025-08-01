@@ -1,9 +1,9 @@
-import { createContext, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 interface AuthProps {
-  authState?: { token: string | null; authenticated: boolean | null };
+  authState?: { token: string | null; authenticated: boolean; loading: boolean };
   onRegister?: (email: string, password: string) => Promise<any>;
   onLogin?: (email: string, password: string) => Promise<any>;
   onLogout?: () => Promise<any>;
@@ -20,23 +20,36 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: any) => {
   const [authState, setAuthState] = useState<{
     token: string | null;
-    authenticated: boolean | null;
+    authenticated: boolean;
+    loading: boolean;
   }>({
     token: null,
-    authenticated: null,
+    authenticated: false,
+    loading: true,
   });
 
   useEffect(() => {
     const loadToken = async () => {
+      console.log('🔄 Tentative de chargement du token depuis SecureStore...');
       const token = await SecureStore.getItemAsync(TOKEN_KEY);
-      console.log('stored token:', token);
+
       if (token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        console.log('✅ Token défini dans Axios');
 
         setAuthState({
           token,
           authenticated: true,
+          loading: false,
         });
+        console.log('🔐 authState mis à jour avec token');
+      } else {
+        setAuthState({
+          token: null,
+          authenticated: false,
+          loading: false,
+        });
+        console.log('❌ Aucun token trouvé. authState réinitialisé.');
       }
     };
     loadToken();
@@ -62,12 +75,14 @@ export const AuthProvider = ({ children }: any) => {
       setAuthState({
         token: result.data.token,
         authenticated: true,
+        loading: false,
       });
 
       axios.defaults.headers.common['Authorization'] =
         `Bearer ${result.data.token}`;
 
       await SecureStore.setItemAsync(TOKEN_KEY, result.data.token);
+      console.log('💾 Token stocké avec succès dans SecureStore');
 
       return result;
     } catch (e) {
@@ -83,6 +98,7 @@ export const AuthProvider = ({ children }: any) => {
     setAuthState({
       token: null,
       authenticated: false,
+      loading: false,
     });
   };
 
