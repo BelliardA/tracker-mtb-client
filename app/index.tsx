@@ -10,8 +10,8 @@ function AppContainer() {
 
 export default function App() {
   return (
-      <AuthProvider>
-        <AppContainer />
-      </AuthProvider>
+    <AuthProvider>
+      <AppContainer />
+    </AuthProvider>
   );
 }

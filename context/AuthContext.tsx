@@ -3,7 +3,11 @@ import * as SecureStore from 'expo-secure-store';
 import { createContext, useContext, useEffect, useState } from 'react';
 
 interface AuthProps {
-  authState?: { token: string | null; authenticated: boolean; loading: boolean };
+  authState?: {
+    token: string | null;
+    authenticated: boolean;
+    loading: boolean;
+  };
   onRegister?: (email: string, password: string) => Promise<any>;
   onLogin?: (email: string, password: string) => Promise<any>;
   onLogout?: () => Promise<any>;

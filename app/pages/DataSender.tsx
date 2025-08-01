@@ -30,11 +30,11 @@ export default function DataSender() {
   if (authState?.loading) {
     return <Text>Chargement de l’authentification…</Text>;
   }
-  
+
   if (!authState?.authenticated || !authState.token) {
     return <Text>Utilisateur non authentifié</Text>;
   }
-  
+
   const token = authState.token;
 
   const router = useRouter();
@@ -51,8 +51,9 @@ export default function DataSender() {
   const [trackAccel, setTrackAccel] = useState<AccelerometerMeasurement[]>([]);
   const [trackLocation, setTrackLocation] = useState<LocationObject[]>([]);
 
-  const [initialInclinaison, setInitialInclinaison] = useState<number | null>(null);
-
+  const [initialInclinaison, setInitialInclinaison] = useState<number | null>(
+    null
+  );
 
   const STORAGE_PATH = FileSystem.documentDirectory + 'sessionBuffer.json';
 
@@ -69,7 +70,7 @@ export default function DataSender() {
   };
 
   const sendData = async () => {
-    console.log("🚀 Envoi en cours...");
+    console.log('🚀 Envoi en cours...');
     if (!startTime || !endTime) {
       console.log({ startTime, endTime });
       return;
@@ -115,7 +116,10 @@ export default function DataSender() {
       router.replace('/pages/Map');
     } catch (error) {
       console.error("❌ Erreur d'envoi :", error);
-      await FileSystem.writeAsStringAsync(STORAGE_PATH, JSON.stringify(session));
+      await FileSystem.writeAsStringAsync(
+        STORAGE_PATH,
+        JSON.stringify(session)
+      );
       Alert.alert(
         'Sauvegarde locale',
         'Track enregistrée hors-ligne. Elle sera envoyée plus tard.'
@@ -206,8 +210,12 @@ export default function DataSender() {
       {screen === 'tracking' && (
         <>
           <View style={styles.statsContainer}>
-            <Text style={styles.stat}>Vitesse : {(getCurrentSpeed() * 3.6).toFixed(1)} km/h</Text>
-            <Text style={styles.stat}>Altitude : {getAltitude().toFixed(1)} m</Text>
+            <Text style={styles.stat}>
+              Vitesse : {(getCurrentSpeed() * 3.6).toFixed(1)} km/h
+            </Text>
+            <Text style={styles.stat}>
+              Altitude : {getAltitude().toFixed(1)} m
+            </Text>
             <Text style={styles.stat}>Temps : {getElapsedTime()} s</Text>
             <Text style={styles.stat}>Inclinaison : {getInclinaison()}°</Text>
           </View>
@@ -233,7 +241,12 @@ export default function DataSender() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
   startButton: {
     backgroundColor: '#606C38',
     width: 200,

@@ -1,5 +1,5 @@
-import * as Location from "expo-location";
-import { useEffect, useRef } from "react";
+import * as Location from 'expo-location';
+import { useEffect, useRef } from 'react';
 
 interface LocalisationProps {
   isRunning: boolean;
@@ -12,15 +12,17 @@ export default function Localisation({
   onLocationUpdate,
   intervalMs = 150,
 }: LocalisationProps) {
-  const locationSubscription = useRef<Location.LocationSubscription | null>(null);
+  const locationSubscription = useRef<Location.LocationSubscription | null>(
+    null
+  );
 
   useEffect(() => {
     let isMounted = true;
 
     const startTracking = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        console.warn("⛔ Permission denied for location");
+      if (status !== 'granted') {
+        console.warn('⛔ Permission denied for location');
         return;
       }
 

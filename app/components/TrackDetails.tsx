@@ -57,10 +57,13 @@ function TrackDetailsInner(
 
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 10,
+      onMoveShouldSetPanResponder: (_, gestureState) =>
+        Math.abs(gestureState.dy) > 10,
       onPanResponderMove: (_, gestureState) => {
         const newHeight = lastSnapPoint.current - gestureState.dy;
-        animatedHeight.setValue(Math.max(SNAP_CLOSED, Math.min(SNAP_TOP, newHeight)));
+        animatedHeight.setValue(
+          Math.max(SNAP_CLOSED, Math.min(SNAP_TOP, newHeight))
+        );
       },
       onPanResponderRelease: (_, gestureState) => {
         const moved = lastSnapPoint.current - gestureState.dy;
