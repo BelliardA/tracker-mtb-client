@@ -126,7 +126,10 @@ export default function DataSender() {
         `${process.env.EXPO_PUBLIC_URL_SERVEUR_API_DEV}/session`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify(session),
         }
       );
