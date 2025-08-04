@@ -158,7 +158,7 @@ export default function Map() {
               latitude: point.latitude,
               longitude: point.longitude,
             }))}
-            strokeColor={colors.secondary}
+            strokeColor={colors.background}
             strokeWidth={4}
           />
         ))}

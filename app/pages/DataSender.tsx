@@ -38,10 +38,6 @@ export default function DataSender() {
   const [trackAccel, setTrackAccel] = useState<AccelerometerMeasurement[]>([]);
   const [trackLocation, setTrackLocation] = useState<LocationObject[]>([]);
 
-  const [initialInclinaison, setInitialInclinaison] = useState<number | null>(
-    null
-  );
-
   const STORAGE_PATH = FileSystem.documentDirectory + 'sessionBuffer.json';
 
   const toggleRunning = () => {
@@ -151,7 +147,9 @@ export default function DataSender() {
 
   const getCurrentSpeed = () => {
     const latest = trackLocation.at(-1);
-    return latest?.coords.speed || 0;
+    return latest?.coords.speed && latest.coords.speed > 0
+      ? latest.coords.speed
+      : 0;
   };
 
   const getAltitude = () => {
@@ -171,13 +169,57 @@ export default function DataSender() {
     const latest = trackAccel.at(-1);
     if (!latest) return 0;
 
-    const angle = Math.atan2(latest.x, latest.z) * (180 / Math.PI);
-    if (initialInclinaison === null) {
-      setInitialInclinaison(angle);
+    const angle = Math.atan2(latest.y, latest.z) * (180 / Math.PI);
+    const normalized = Math.abs(angle + 180); // Normalize so flat is 0
+    return Math.round(normalized);
+  };
+
+  // Utilitaire pour calculer la distance entre deux points GPS (Haversine)
+  const getDistanceBetween = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+  ) => {
+    const R = 6371e3; // rayon de la Terre en mètres
+    const φ1 = (lat1 * Math.PI) / 180;
+    const φ2 = (lat2 * Math.PI) / 180;
+    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // en mètres
+  };
+
+  const getTotalDistance = () => {
+    if (trackLocation.length < 2) return 0;
+
+    let distance = 0;
+    for (let i = 1; i < trackLocation.length; i++) {
+      const prev = trackLocation[i - 1];
+      const curr = trackLocation[i];
+
+      const d = getDistanceBetween(
+        prev.coords.latitude,
+        prev.coords.longitude,
+        curr.coords.latitude,
+        curr.coords.longitude
+      );
+
+      if (d > 3 && d < 50) {
+        // Ignore les sauts GPS < 3m (bruit) et > 50m (incohérents)
+        distance += d;
+      }
     }
 
-    return Math.round(angle - (initialInclinaison ?? angle));
+    return distance / 1000; // retour en km
   };
+
   if (authState?.loading) {
     return <Text>Chargement de l’authentification…</Text>;
   }
@@ -204,25 +246,32 @@ export default function DataSender() {
       )}
 
       {screen === 'tracking' && (
-        <>
-          <View style={styles.statsContainer}>
-            <Text style={styles.stat}>
-              Vitesse : {(getCurrentSpeed() * 3.6).toFixed(1)} km/h
+        <View style={styles.dashboard}>
+          <Text style={styles.speed}>
+            {(getCurrentSpeed() * 3.6).toFixed(1)} km/h
+          </Text>
+
+          <View style={styles.metricsRow}>
+            <Text style={styles.metric}>🧭 {getInclinaison()}°</Text>
+            <Text style={styles.metric}>
+              🕒 {Math.floor(getElapsedTime() / 60)}:
+              {(getElapsedTime() % 60).toString().padStart(2, '0')}
             </Text>
-            <Text style={styles.stat}>
-              Altitude : {getAltitude().toFixed(1)} m
+            <Text style={styles.metric}>
+              📍 {getTotalDistance().toFixed(2)} km
             </Text>
-            <Text style={styles.stat}>Temps : {getElapsedTime()} s</Text>
-            <Text style={styles.stat}>Inclinaison : {getInclinaison()}°</Text>
           </View>
+
+          <Text style={styles.metric}>⛰️ {getAltitude().toFixed(1)} m</Text>
+
           <TouchableOpacity style={styles.endButton} onPress={toggleRunning}>
             <Text style={styles.endButtonText}>Fin de la piste</Text>
           </TouchableOpacity>
-        </>
+        </View>
       )}
 
       {screen === 'end' && (
-        <View style={styles.endContainer}>
+        <View style={styles.endDashboard}>
           <TextInput
             style={styles.input}
             placeholder="Nom de la piste"
@@ -280,17 +329,60 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
-  endContainer: {
-    width: '100%',
-    gap: 20,
-  },
   input: {
-    borderWidth: 1,
-    borderColor: '#606C38',
-    padding: 10,
-    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#DDA15E',
+    padding: 12,
+    borderRadius: 12,
     fontSize: 18,
     width: '100%',
-    backgroundColor: 'white',
+    backgroundColor: '#283618',
+    color: '#FEFAE0',
+    fontWeight: '600',
+  },
+  dashboard: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
+    padding: 20,
+    borderRadius: 16,
+    width: '100%',
+    marginTop: 20,
+  },
+
+  endDashboard: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
+    padding: 20,
+    borderRadius: 16,
+    width: '100%',
+    marginTop: 20,
+  },
+
+  speed: {
+    fontSize: 60,
+    color: '#DDA15E', // accent
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+
+  metricsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 30,
+  },
+
+  metric: {
+    fontSize: 20,
+    color: '#FEFAE0',
+    fontWeight: '600',
+    textAlign: 'center',
+    minWidth: 80,
   },
 });
