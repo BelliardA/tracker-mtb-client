@@ -10,7 +10,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "format": "prettier --write \"**/*.{js,ts,jsx,tsx,json,md}\"",
-    "build": "npx eas build --platform android --profile preview"
+    "build": "npx eas build --platform android --profile preview",
+    "ci-check": "npm run format && npm run lint && npx expo-doctor"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",

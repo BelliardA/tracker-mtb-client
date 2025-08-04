@@ -9,9 +9,8 @@ import TrackDetails, { TrackDetailsRef } from '../components/TrackDetails';
 
 export default function Map() {
   const { authState } = useAuth();
-  const [location, setLocation] = useState<Location.LocationObjectCoords | null>(
-    null
-  );
+  const [location, setLocation] =
+    useState<Location.LocationObjectCoords | null>(null);
   const [tracks, setTracks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [shouldCenter, setShouldCenter] = useState(true);
@@ -44,7 +43,7 @@ export default function Map() {
         animated: true,
       });
     }
-  }
+  };
 
   const fetchTracks = useCallback(async () => {
     try {

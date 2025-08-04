@@ -115,7 +115,6 @@ export default function DataSender() {
     }
   };
 
-
   useEffect(() => {
     const sendOfflineDataIfExists = async () => {
       if (!authState?.token) {

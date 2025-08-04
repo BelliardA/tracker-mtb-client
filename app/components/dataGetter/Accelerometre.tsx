@@ -15,9 +15,9 @@ export default function Accelerometre({
   isRunning,
   setTrack,
 }: AccelerometerProps) {
-  const subscription = useRef<ReturnType<typeof Accelerometer.addListener> | null>(
-    null
-  );
+  const subscription = useRef<ReturnType<
+    typeof Accelerometer.addListener
+  > | null>(null);
 
   Accelerometer.setUpdateInterval(50);
 
@@ -28,7 +28,6 @@ export default function Accelerometre({
       return;
     }
 
-   
     const sub = Accelerometer.addListener((accelerometerData) => {
       setTrack((prev) => [...prev, accelerometerData]);
     });

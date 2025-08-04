@@ -26,7 +26,7 @@ export default function Gyro({ isRunning, setTrack }: GyroProps) {
     }
 
     const sub = Gyroscope.addListener((gyroscopeData) => {
-      setTrack((prev) => [...prev, gyroscopeData]); 
+      setTrack((prev) => [...prev, gyroscopeData]);
     });
     subscription.current = sub;
 
