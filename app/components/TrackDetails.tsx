@@ -1,5 +1,5 @@
 import * as Location from 'expo-location';
-import { router, useNavigation } from 'expo-router';
+import { router } from 'expo-router';
 import React, {
   forwardRef,
   useCallback,
@@ -17,6 +17,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { Coordinates, getDistance } from '../utils/distanceCalculate';
 
 interface TrackDetailsProps {
   visible: boolean;
@@ -29,12 +30,6 @@ const SNAP_TOP = SCREEN_HEIGHT * 0.8;
 const SNAP_MIDDLE = SCREEN_HEIGHT * 0.3;
 const SNAP_CLOSED = 0;
 
-const START_POINT = {
-  latitude: 45.919162,
-  longitude: 6.143845,
-};
-
-
 export interface TrackDetailsRef {
   closeSheet: () => void;
 }
@@ -46,7 +41,6 @@ function TrackDetailsInner(
   const animatedHeight = useRef(new Animated.Value(SNAP_CLOSED)).current;
   const lastSnapPoint = useRef(SNAP_CLOSED);
   const [isVisible, setIsVisible] = useState(false);
-  const navigation = useNavigation();
 
   const animateTo = useCallback(
     (value: number) => {
@@ -101,35 +95,38 @@ function TrackDetailsInner(
     }
   }, [visible, animateTo]);
 
+  const getTrackStartPoint = async (
+    id: string
+  ): Promise<Coordinates | null> => {
+    // TODO: replace this mock with a real API or database lookup
+    const mock: Record<string, Coordinates> = {
+      annecy: { latitude: 45.919162, longitude: 6.143845 },
+    };
+    return mock[id] ?? null;
+  };
+
   const handleRidePress = async () => {
     try {
+      if (!trackId) return;
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return;
 
-      const location = await Location.getCurrentPositionAsync({});
-      const { latitude, longitude } = location.coords;
-
-      const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-        const toRad = (value: number) => (value * Math.PI) / 180;
-        const R = 6371e3;
-        const φ1 = toRad(lat1);
-        const φ2 = toRad(lat2);
-        const Δφ = toRad(lat2 - lat1);
-        const Δλ = toRad(lon2 - lon1);
-
-        const a =
-          Math.sin(Δφ / 2) ** 2 +
-          Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        return R * c;
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      const userPosition: Coordinates = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
       };
 
-      const distance = getDistance(latitude, longitude, START_POINT.latitude, START_POINT.longitude);
+      const startPoint = await getTrackStartPoint(trackId);
+      if (!startPoint) return;
+
+      const distance = getDistance(userPosition, startPoint);
 
       if (distance > 40) {
-        const url = `https://www.google.com/maps/dir/?api=1&destination=${START_POINT.latitude},${START_POINT.longitude}`;
-        Linking.openURL(url);
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${startPoint.latitude},${startPoint.longitude}`;
+        await Linking.openURL(url);
       } else {
         router.push('/pages/GoInTrack');
       }
@@ -137,7 +134,6 @@ function TrackDetailsInner(
       console.error('Erreur lors du calcul de la distance :', err);
     }
   };
-
 
   if (!isVisible) return null;
 
@@ -150,7 +146,7 @@ function TrackDetailsInner(
       <View style={styles.content}>
         <Text style={styles.text}>Track ID: {trackId}</Text>
         <View style={{ marginTop: 20 }}>
-        <Text style={styles.button} onPress={handleRidePress}>
+          <Text style={styles.button} onPress={handleRidePress}>
             🚴 Rider ce chemin
           </Text>
         </View>

@@ -21,6 +21,7 @@ import Accelerometre from '../components/dataGetter/Accelerometre';
 import Barometre from '../components/dataGetter/Barometre';
 import Gyro from '../components/dataGetter/Gyroscope';
 import Localisation from '../components/dataGetter/Location';
+import { getDistance } from '../utils/distanceCalculate';
 
 export default function DataSender() {
   const { authState } = useAuth();
@@ -174,28 +175,6 @@ export default function DataSender() {
     return Math.round(normalized);
   };
 
-  // Utilitaire pour calculer la distance entre deux points GPS (Haversine)
-  const getDistanceBetween = (
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number
-  ) => {
-    const R = 6371e3; // rayon de la Terre en mètres
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-    const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c; // en mètres
-  };
-
   const getTotalDistance = () => {
     if (trackLocation.length < 2) return 0;
 
@@ -203,12 +182,9 @@ export default function DataSender() {
     for (let i = 1; i < trackLocation.length; i++) {
       const prev = trackLocation[i - 1];
       const curr = trackLocation[i];
-
-      const d = getDistanceBetween(
-        prev.coords.latitude,
-        prev.coords.longitude,
-        curr.coords.latitude,
-        curr.coords.longitude
+      const d = getDistance(
+        { latitude: prev.coords.latitude, longitude: prev.coords.longitude },
+        { latitude: curr.coords.latitude, longitude: curr.coords.longitude }
       );
 
       if (d > 3 && d < 50) {
