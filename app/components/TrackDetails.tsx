@@ -1,3 +1,4 @@
+import { useAuth } from '@/context/AuthContext';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import React, {
@@ -41,6 +42,41 @@ function TrackDetailsInner(
   const animatedHeight = useRef(new Animated.Value(SNAP_CLOSED)).current;
   const lastSnapPoint = useRef(SNAP_CLOSED);
   const [isVisible, setIsVisible] = useState(false);
+  const [session, setSession] = useState<any | null>(null);
+
+  const { authState } = useAuth();
+
+  //Fetch la track
+  useEffect(() => {
+    const fetchTrack = async () => {
+      if (!trackId) return;
+
+      try {
+        const response = await fetch(
+          `${process.env.EXPO_PUBLIC_URL_SERVEUR_API_DEV}/session/${trackId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${authState?.token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch track data');
+        }
+
+        const session = await response.json();
+        setSession(session);
+      } catch (error) {
+        console.error(
+          '❌ Erreur lors de la récupération des données de la piste :',
+          error
+        );
+      }
+    };
+
+    fetchTrack();
+  }, [trackId, authState?.token]);
 
   const animateTo = useCallback(
     (value: number) => {
@@ -95,43 +131,40 @@ function TrackDetailsInner(
     }
   }, [visible, animateTo]);
 
-  const getTrackStartPoint = async (
-    id: string
-  ): Promise<Coordinates | null> => {
-    // TODO: replace this mock with a real API or database lookup
-    const mock: Record<string, Coordinates> = {
-      annecy: { latitude: 45.919162, longitude: 6.143845 },
-    };
-    return mock[id] ?? null;
-  };
-
   const handleRidePress = async () => {
-    try {
-      if (!trackId) return;
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
+    if (!session) {
+      console.log('❌ Aucune session disponible pour démarrer la navigation');
+    }
+    if (!session.startTrack) {
+      console.warn('point de départ disponible');
+      return;
+    }
 
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-      const userPosition: Coordinates = {
+    console.log('🚴‍♂️ Démarrage de la navigation vers le point de départ...');
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.warn('Permission de localisation non accordée');
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      const userCoords: Coordinates = {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       };
 
-      const startPoint = await getTrackStartPoint(trackId);
-      if (!startPoint) return;
-
-      const distance = getDistance(userPosition, startPoint);
+      const startCoords: Coordinates = session.startTrack;
+      const distance = getDistance(userCoords, startCoords);
 
       if (distance > 40) {
-        const url = `https://www.google.com/maps/dir/?api=1&destination=${startPoint.latitude},${startPoint.longitude}`;
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${startCoords.latitude},${startCoords.longitude}`;
         await Linking.openURL(url);
       } else {
         router.push('/pages/GoInTrack');
       }
-    } catch (err) {
-      console.error('Erreur lors du calcul de la distance :', err);
+    } catch (error) {
+      console.error('Erreur lors de la localisation ou navigation :', error);
     }
   };
 

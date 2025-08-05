@@ -34,8 +34,8 @@ export default function Map() {
     // Extract coordinates from the track
     setSelectedTrackId(track._id);
     const coords = track.sensors.gps.map((point: any) => ({
-      latitude: point.latitude,
-      longitude: point.longitude,
+      latitude: point.coords.latitude,
+      longitude: point.coords.longitude,
     }));
     if (coords.length > 0) {
       mapRef.current?.fitToCoordinates(coords, {
@@ -155,8 +155,8 @@ export default function Map() {
             tappable
             onPress={() => handleTrackPress(track)}
             coordinates={track.sensors.gps.map((point: any) => ({
-              latitude: point.latitude,
-              longitude: point.longitude,
+              latitude: point.coords.latitude,
+              longitude: point.coords.longitude,
             }))}
             strokeColor={colors.background}
             strokeWidth={4}
@@ -167,11 +167,6 @@ export default function Map() {
         <Text
           style={styles.fab}
           onPress={() => {
-            // Redirection vers DataSender
-            // Attention : nécessite que tu sois dans une navigation stack
-            // et que DataSender soit bien déclaré comme screen
-            // Si ce n’est pas le cas, tu peux remplacer ceci par un Router.push
-            // ou équivalent selon ta structure
             router.push('/pages/DataSender');
           }}
         >

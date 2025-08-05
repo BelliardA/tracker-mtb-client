@@ -71,11 +71,14 @@ export default function DataSender() {
         barometer: trackBaro,
         gps: trackLocation.map((loc) => ({
           timestamp: loc.timestamp,
-          latitude: loc.coords.latitude,
-          longitude: loc.coords.longitude,
-          altitude: loc.coords.altitude,
-          speed: loc.coords.speed,
-          heading: loc.coords.heading,
+          coords: {
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+            altitude: loc.coords.altitude,
+            speed: loc.coords.speed,
+            heading: loc.coords.heading,
+            altitudeAccuracy: loc.coords.altitudeAccuracy,
+          },
         })),
       },
     };
@@ -94,8 +97,15 @@ export default function DataSender() {
       );
 
       const result = await response.json();
-      console.log('✅ Session envoyée :', result);
 
+      if (!response.ok) {
+        Alert.alert(
+          'Erreur',
+          result.message || 'Une erreur est survenue lors de l’envoi.'
+        );
+        return;
+      }
+      console.log('✅ Session envoyée avec succès :', result);
       Alert.alert('Succès', 'Track envoyée !');
       router.replace('/pages/Map');
     } catch (error) {
