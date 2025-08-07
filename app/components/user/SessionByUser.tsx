@@ -2,13 +2,15 @@ import { formatDistance } from '@/app/utils/adaptDistance';
 import useApi from '@/hooks/useApi';
 import { Session } from '@/types/session';
 import { router } from 'expo-router';
+import { Trash2 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function SessionByUser({ userId }: { userId: string }) {
   const { fetchWithAuth } = useApi();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingSessionIds, setDeletingSessionIds] = useState<string[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -33,6 +35,31 @@ export default function SessionByUser({ userId }: { userId: string }) {
     load();
   }, [userId]);
 
+  const handleDelete = (sessionId: string) => {
+    Alert.alert(
+      'Supprimer la session',
+      'Es-tu sûr de vouloir supprimer cette piste ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await fetchWithAuth(`/session/${sessionId}`, {
+                method: 'DELETE',
+              });
+              setDeletingSessionIds((prev) => [...prev, sessionId]);
+              setSessions((prev) => prev.filter((s) => s._id !== sessionId));
+            } catch (error) {
+              console.error('❌ Erreur suppression session:', error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   if (loading)
     return <Text style={styles.loading}>Chargement des pistes...</Text>;
   if (!sessions.length)
@@ -48,15 +75,25 @@ export default function SessionByUser({ userId }: { userId: string }) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Dernières pistes</Text>
-      {sessions.map((session) => (
-        <View key={session._id} style={styles.sessionCard}>
-          <Text style={styles.sessionName}>{session.name}</Text>
-          <Text style={styles.sessionMeta}>
-            {new Date(session.startTime).toLocaleString()} -{' '}
-            {formatDistance(session.totalDistance)}
-          </Text>
-        </View>
-      ))}
+      {sessions.map((session) =>
+        deletingSessionIds.includes(session._id) ? null : (
+          <View key={session._id} style={styles.sessionCard}>
+            <Text style={styles.sessionName}>{session.name}</Text>
+            <Text style={styles.sessionMeta}>
+              {new Date(session.startTime).toLocaleString()} -{' '}
+              {formatDistance(session.totalDistance)}
+            </Text>
+            {session.userId === userId && (
+              <TouchableOpacity
+                onPress={() => handleDelete(session._id)}
+                style={styles.trashIcon}
+              >
+                <Trash2 color="#BC6C25" size={20} />
+              </TouchableOpacity>
+            )}
+          </View>
+        )
+      )}
     </View>
   );
 }
@@ -108,5 +145,21 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: '#DDA15E',
     fontWeight: '600',
+  },
+  deleteButton: {
+    marginTop: 8,
+    backgroundColor: '#BC6C25',
+    padding: 6,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  deleteText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  trashIcon: {
+    position: 'absolute',
+    right: 12,
+    top: 12,
   },
 });

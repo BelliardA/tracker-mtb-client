@@ -1,5 +1,5 @@
 export type Session = {
-  _id?: string;
+  _id: string;
   name: string;
   startTime: Date;
   endTime: Date | null;
