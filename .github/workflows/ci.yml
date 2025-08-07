@@ -32,3 +32,17 @@ jobs:
         run: npx expo-doctor
         env:
           EXPO_PUBLIC_URL_SERVEUR_API_DEV: ${{ secrets.EXPO_PUBLIC_URL_SERVEUR_API_DEV }}
+
+      - name: ✅ Check splash image presence
+        run: |
+            if [ ! -f ./assets/images/splash-icon.png ]; then
+              echo "❌ Missing splash image at ./assets/images/splash-icon.png"
+              exit 1
+            else
+              echo "✅ Splash image found"
+            fi
+  
+      - name: 🧪 Prebuild dry-run (Android)
+        run: npx expo prebuild --no-install --platform android
+        env:
+          EXPO_PUBLIC_URL_SERVEUR_API_DEV: ${{ secrets.EXPO_PUBLIC_URL_SERVEUR_API_DEV }}
