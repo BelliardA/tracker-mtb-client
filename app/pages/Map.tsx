@@ -1,5 +1,5 @@
 import { colors } from '@/app/styles/colors';
-import { useAuth } from '@/context/AuthContext';
+import useApi from '@/hooks/useApi';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -8,7 +8,8 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import TrackDetails, { TrackDetailsRef } from '../components/TrackDetails';
 
 export default function Map() {
-  const { authState } = useAuth();
+  const { fetchWithAuth } = useApi();
+
   const [location, setLocation] =
     useState<Location.LocationObjectCoords | null>(null);
   const [tracks, setTracks] = useState<any[]>([]);
@@ -47,23 +48,18 @@ export default function Map() {
 
   const fetchTracks = useCallback(async () => {
     try {
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_URL_SERVEUR_API_DEV}/session`,
-        {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${authState?.token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      const data = await response.json();
-      setTracks(data);
-      console.log('🔄 Pistes chargées :', data.length);
+      const data = await fetchWithAuth('/session');
+
+      if (data && Array.isArray(data)) {
+        setTracks(data);
+        console.log('🔄 Pistes chargées :', data.length);
+      } else {
+        console.warn('⚠️ Données inattendues pour les pistes :', data);
+      }
     } catch (err) {
       console.error('❌ Erreur récupération pistes :', err);
     }
-  }, [authState?.token]);
+  }, [fetchWithAuth]);
 
   useEffect(() => {
     let subscriber: Location.LocationSubscription;
@@ -163,6 +159,16 @@ export default function Map() {
           />
         ))}
       </MapView>
+      <View style={styles.profileButtonContainer}>
+        <Text
+          style={styles.profileButton}
+          onPress={() => {
+            router.push('/pages/Profile');
+          }}
+        >
+          👤
+        </Text>
+      </View>
       <View style={styles.fabContainer}>
         <Text
           style={styles.fab}
@@ -216,6 +222,19 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: 48,
     lineHeight: 48,
+    fontWeight: 'bold',
+  },
+  profileButtonContainer: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    backgroundColor: 'white',
+    borderRadius: 50,
+    padding: 10,
+    elevation: 4,
+  },
+  profileButton: {
+    fontSize: 24,
     fontWeight: 'bold',
   },
 });
