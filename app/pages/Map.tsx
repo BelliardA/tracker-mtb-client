@@ -59,7 +59,7 @@ export default function Map() {
     } catch (err) {
       console.error('❌ Erreur récupération pistes :', err);
     }
-  }, [fetchWithAuth]);
+  }, []);
 
   useEffect(() => {
     let subscriber: Location.LocationSubscription;

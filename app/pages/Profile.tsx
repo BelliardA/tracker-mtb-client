@@ -47,7 +47,7 @@ export default function Profile() {
     if (authState?.token) {
       load();
     }
-  }, [authState?.token, fetchWithAuth]);
+  }, [authState?.token]);
 
   if (loading) {
     return (
