@@ -21,8 +21,8 @@ export type User = {
   bikeType?: 'trail' | 'enduro' | 'mtb' | 'dh';
   ridingStyle?: 'fun' | 'race' | 'exploration';
 
-  totalRides?: number;
-  totalDistance?: number;
+  totalRides: number;
+  totalDistance: number;
   bestTrackTime?: BestTrackTime;
 
   createdAt?: string;

@@ -1,3 +1,4 @@
+import { formatDistance } from '@/app/utils/adaptDistance';
 import { useAuth } from '@/context/AuthContext';
 import useApi from '@/hooks/useApi';
 import { User } from '@/types/user';
@@ -36,6 +37,7 @@ export default function Profile() {
   useEffect(() => {
     async function load() {
       try {
+        await fetchWithAuth('/users/me/stats', { method: 'POST' });
         const profile = await fetchWithAuth('/users/me');
         setUser(profile as User);
       } catch (err) {
@@ -82,7 +84,7 @@ export default function Profile() {
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statVal}>
-              {(user.totalDistance || 0).toFixed(1)} km
+              {formatDistance(user.totalDistance)}
             </Text>
             <Text style={styles.statLabel}>Distance</Text>
           </View>

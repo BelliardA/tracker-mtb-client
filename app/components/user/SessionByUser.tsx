@@ -1,3 +1,4 @@
+import { formatDistance } from '@/app/utils/adaptDistance';
 import useApi from '@/hooks/useApi';
 import { Session } from '@/types/session';
 import { router } from 'expo-router';
@@ -52,7 +53,7 @@ export default function SessionByUser({ userId }: { userId: string }) {
           <Text style={styles.sessionName}>{session.name}</Text>
           <Text style={styles.sessionMeta}>
             {new Date(session.startTime).toLocaleString()} -{' '}
-            {session.totalDistance?.toFixed(1)} km
+            {formatDistance(session.totalDistance)}
           </Text>
         </View>
       ))}
