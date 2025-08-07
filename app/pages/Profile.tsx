@@ -2,7 +2,8 @@ import { formatDistance } from '@/app/utils/adaptDistance';
 import { useAuth } from '@/context/AuthContext';
 import useApi from '@/hooks/useApi';
 import { User } from '@/types/user';
-import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { ChevronDownIcon, ChevronUpIcon, Pencil } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -19,6 +20,7 @@ import SessionByUser from '../components/user/SessionByUser';
 export default function Profile() {
   const { authState, onLogout } = useAuth();
   const { fetchWithAuth } = useApi();
+  const router = useRouter();
   const [user, setUser] = useState<User>({
     _id: '',
     email: '',
@@ -74,6 +76,12 @@ export default function Profile() {
           {user.bikeBrand} {user.bikeModel}
         </Text>
       </View>
+      <TouchableOpacity
+        style={{ position: 'absolute', top: 20, right: 20 }}
+        onPress={() => router.push('/pages/Editprofile')}
+      >
+        <Pencil color="#fff" size={24} />
+      </TouchableOpacity>
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Statistiques</Text>

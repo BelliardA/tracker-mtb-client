@@ -2,12 +2,15 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { createContext, useContext, useEffect, useState } from 'react';
 
+interface AuthState {
+  token: string | null;
+  authenticated: boolean;
+  loading: boolean;
+  user?: any; // Ideally replace 'any' with a proper User type
+}
+
 interface AuthProps {
-  authState?: {
-    token: string | null;
-    authenticated: boolean;
-    loading: boolean;
-  };
+  authState?: AuthState;
   onRegister?: (email: string, password: string) => Promise<any>;
   onLogin?: (email: string, password: string) => Promise<any>;
   onLogout?: () => Promise<any>;
@@ -22,14 +25,11 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: any) => {
-  const [authState, setAuthState] = useState<{
-    token: string | null;
-    authenticated: boolean;
-    loading: boolean;
-  }>({
+  const [authState, setAuthState] = useState<AuthState>({
     token: null,
     authenticated: false,
     loading: true,
+    user: undefined,
   });
 
   useEffect(() => {
@@ -45,6 +45,7 @@ export const AuthProvider = ({ children }: any) => {
           token,
           authenticated: true,
           loading: false,
+          user: undefined,
         });
         console.log('🔐 authState mis à jour avec token');
       } else {
@@ -52,6 +53,7 @@ export const AuthProvider = ({ children }: any) => {
           token: null,
           authenticated: false,
           loading: false,
+          user: undefined,
         });
         console.log('❌ Aucun token trouvé. authState réinitialisé.');
       }
@@ -80,6 +82,7 @@ export const AuthProvider = ({ children }: any) => {
         token: result.data.token,
         authenticated: true,
         loading: false,
+        user: result.data.user,
       });
 
       axios.defaults.headers.common['Authorization'] =
@@ -103,6 +106,7 @@ export const AuthProvider = ({ children }: any) => {
       token: null,
       authenticated: false,
       loading: false,
+      user: undefined,
     });
   };
 
