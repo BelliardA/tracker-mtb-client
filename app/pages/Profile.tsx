@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import SessionByUser from '../components/user/SessionByUser';
 
 export default function Profile() {
   const { authState, onLogout } = useAuth();
@@ -150,6 +151,7 @@ export default function Profile() {
           </View>
         </Animated.View>
       </View>
+      <SessionByUser userId={user._id} />
 
       <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
         <Text style={styles.logoutText}>Se déconnecter</Text>
