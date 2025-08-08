@@ -1,7 +1,8 @@
 import { colors } from '@/app/styles/colors';
+import { useAuth } from '@/context/AuthContext';
 import useApi from '@/hooks/useApi';
 import * as Location from 'expo-location';
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
@@ -9,6 +10,7 @@ import TrackDetails, { TrackDetailsRef } from '../components/TrackDetails';
 
 export default function Map() {
   const { fetchWithAuth } = useApi();
+  const { authState, refreshAuthFromStorage } = useAuth();
 
   const [location, setLocation] =
     useState<Location.LocationObjectCoords | null>(null);
@@ -62,9 +64,27 @@ export default function Map() {
   }, []);
 
   useEffect(() => {
+    if (
+      !authState?.loading &&
+      (!authState?.authenticated || !authState?.token)
+    ) {
+      refreshAuthFromStorage?.();
+    }
+  }, [
+    authState?.loading,
+    authState?.authenticated,
+    authState?.token,
+    refreshAuthFromStorage,
+  ]);
+
+  useEffect(() => {
     let subscriber: Location.LocationSubscription;
 
     const loadEverything = async () => {
+      if (!authState?.authenticated || !authState?.token) {
+        setLoading(false);
+        return;
+      }
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
@@ -105,7 +125,20 @@ export default function Map() {
       if (subscriber) subscriber.remove();
       if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
     };
-  }, [shouldCenter, fetchTracks]);
+  }, [shouldCenter, fetchTracks, authState?.authenticated, authState?.token]);
+
+  if (authState?.loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text>Chargement de l’authentification…</Text>
+      </View>
+    );
+  }
+
+  if (!authState?.loading && (!authState?.authenticated || !authState?.token)) {
+    return <Redirect href="/pages/Login" />;
+  }
 
   if (loading) {
     return (
@@ -228,7 +261,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 50,
     left: 20,
-    backgroundColor: 'white',
+    backgroundColor: colors.background,
     borderRadius: 50,
     padding: 10,
     elevation: 4,
