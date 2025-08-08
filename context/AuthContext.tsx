@@ -9,9 +9,24 @@ interface AuthState {
   user?: any; // Ideally replace 'any' with a proper User type
 }
 
+export interface RegisterPayload {
+  email: string;
+  password: string;
+  nickname: string;
+  bikeBrand: string;
+  bikeModel: string;
+  bikeType: 'trail' | 'enduro' | 'mtb' | 'dh';
+  ridingStyle: 'fun' | 'race' | 'exploration';
+  firstName: string;
+  lastName: string;
+  age: number;
+  gender?: 'male' | 'female' | 'other' | null;
+  profilePictureUrl?: string | null;
+}
+
 interface AuthProps {
   authState?: AuthState;
-  onRegister?: (email: string, password: string) => Promise<any>;
+  onRegister?: (payload: RegisterPayload) => Promise<any>;
   onLogin?: (email: string, password: string) => Promise<any>;
   onLogout?: () => Promise<any>;
 }
@@ -61,11 +76,12 @@ export const AuthProvider = ({ children }: any) => {
     loadToken();
   }, []);
 
-  const register = async (email: string, password: string) => {
+  const register = async (payload: RegisterPayload) => {
     try {
-      return await axios.post(`${API_URL}/auth/signup`, { email, password });
+      return await axios.post(`${API_URL}/auth/signup`, payload);
     } catch (e) {
-      return { error: true, msg: (e as any).response.data.msg };
+      const msg = (e as any)?.response?.data?.msg || 'Erreur inscription';
+      return { error: true, msg };
     }
   };
 

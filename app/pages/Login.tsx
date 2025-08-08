@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import ProfileSetup from './ProfileSetup';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { onLogin, onRegister } = useAuth();
+  const [showProfileSetup, setShowProfileSetup] = useState(false);
+  const { onLogin } = useAuth();
 
   const login = async () => {
     const result = await onLogin!(email, password);
@@ -15,14 +17,9 @@ const Login = () => {
     }
   };
 
-  const register = async () => {
-    const result = await onRegister!(email, password);
-    if (result && result.error) {
-      setError(result.msg || "Erreur d'inscription");
-    } else {
-      login();
-    }
-  };
+  if (showProfileSetup) {
+    return <ProfileSetup email={email} password={password} />;
+  }
 
   return (
     <View style={styles.container}>
@@ -45,7 +42,7 @@ const Login = () => {
       />
       <Button title="Se connecter" onPress={login} />
       <View style={{ height: 10 }} />
-      <Button title="S'inscrire" onPress={register} />
+      <Button title="S'inscrire" onPress={() => setShowProfileSetup(true)} />
     </View>
   );
 };
