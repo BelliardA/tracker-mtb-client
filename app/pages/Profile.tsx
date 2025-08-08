@@ -24,7 +24,20 @@ const display = (v?: string | number | null) =>
   v === null || v === undefined || v === '' ? '--' : String(v);
 
 export default function Profile() {
-  const { authState, onLogout } = useAuth();
+  const { authState, onLogout, refreshAuthFromStorage } = useAuth();
+  useEffect(() => {
+    if (
+      !authState?.loading &&
+      (!authState?.authenticated || !authState?.token)
+    ) {
+      refreshAuthFromStorage?.();
+    }
+  }, [
+    authState?.loading,
+    authState?.authenticated,
+    authState?.token,
+    refreshAuthFromStorage,
+  ]);
   const { fetchWithAuth } = useApi();
   const router = useRouter();
   const [user, setUser] = useState<User>({
@@ -43,6 +56,7 @@ export default function Profile() {
   const [infoOpen, setInfoOpen] = useState(false);
   const [editVisible, setEditVisible] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const handleLogout = () => {
     Alert.alert(
@@ -78,8 +92,10 @@ export default function Profile() {
         await fetchWithAuth('/users/me/stats', { method: 'POST' });
         const profile = await fetchWithAuth('/users/me');
         setUser(profile as User);
+        setLoadError(null);
       } catch (err) {
         console.error('❌ Erreur de chargement du profil :', err);
+        setLoadError('Impossible de charger le profil.');
       } finally {
         setLoading(false);
       }
@@ -90,10 +106,79 @@ export default function Profile() {
     }
   }, [authState?.token]);
 
+  if (authState?.loading) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color="#888" />
+        <Text style={{ color: '#fff', marginTop: 12 }}>
+          Chargement de l’authentification…
+        </Text>
+      </View>
+    );
+  }
+
+  if (!authState?.authenticated || !authState.token) {
+    return (
+      <View style={[styles.loading, { padding: 20 }]}>
+        <Text style={{ color: '#fff', marginBottom: 12, textAlign: 'center' }}>
+          Vous n'êtes pas connecté.
+        </Text>
+        <TouchableOpacity
+          onPress={() => router.replace('/pages/Login')}
+          style={{
+            backgroundColor: '#BC6C25',
+            paddingVertical: 12,
+            paddingHorizontal: 18,
+            borderRadius: 8,
+          }}
+        >
+          <Text style={{ color: '#fff', fontWeight: '700' }}>
+            Aller au login
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   if (loading) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color="#888" />
+        {loadError ? (
+          <>
+            <Text style={{ color: '#fff', marginTop: 12 }}>{loadError}</Text>
+            <TouchableOpacity
+              onPress={() => {
+                setLoading(true);
+                setLoadError(null);
+                // relance du chargement
+                (async () => {
+                  try {
+                    await fetchWithAuth('/users/me/stats', { method: 'POST' });
+                    const profile = await fetchWithAuth('/users/me');
+                    setUser(profile as User);
+                    setLoadError(null);
+                  } catch (e) {
+                    setLoadError('Impossible de charger le profil.');
+                  } finally {
+                    setLoading(false);
+                  }
+                })();
+              }}
+              style={{
+                marginTop: 10,
+                backgroundColor: '#BC6C25',
+                paddingVertical: 10,
+                paddingHorizontal: 16,
+                borderRadius: 8,
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700' }}>
+                Réessayer
+              </Text>
+            </TouchableOpacity>
+          </>
+        ) : null}
       </View>
     );
   }

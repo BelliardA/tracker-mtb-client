@@ -1,5 +1,6 @@
 import { RegisterPayload, useAuth } from '@/context/AuthContext';
-import React, { useMemo, useState } from 'react';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -58,6 +59,9 @@ type ProfileSetupProps = {
 
 export default function ProfileSetup({ email, password }: ProfileSetupProps) {
   const { onRegister, onLogin } = useAuth();
+  const { authState } = useAuth();
+  const router = useRouter();
+  const [waitingAuth, setWaitingAuth] = useState(false);
 
   // Champs requis
   const [nickname, setNickname] = useState('');
@@ -141,6 +145,7 @@ export default function ProfileSetup({ email, password }: ProfileSetupProps) {
         setError((res as any)?.msg || 'Erreur lors de la création du compte');
       } else {
         await onLogin(email, password);
+        setWaitingAuth(true);
       }
     } catch (e: any) {
       setError(e?.message || 'Erreur lors de la sauvegarde');
@@ -148,6 +153,16 @@ export default function ProfileSetup({ email, password }: ProfileSetupProps) {
       setSaving(false);
     }
   };
+
+  useEffect(() => {
+    if (waitingAuth && authState?.authenticated && authState.token) {
+      // petite latence pour laisser le contexte finir de se propager
+      const t = setTimeout(() => {
+        router.replace('/pages/Map');
+      }, 300);
+      return () => clearTimeout(t);
+    }
+  }, [waitingAuth, authState?.authenticated, authState?.token]);
 
   return (
     <KeyboardAvoidingView
@@ -269,6 +284,19 @@ export default function ProfileSetup({ email, password }: ProfileSetupProps) {
         </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
+
+        {waitingAuth ? (
+          <View
+            style={{
+              marginTop: 8,
+              padding: 12,
+              backgroundColor: '#2b2b2b',
+              borderRadius: 8,
+            }}
+          >
+            <Text style={{ color: '#ccc' }}>Connexion en cours…</Text>
+          </View>
+        ) : null}
 
         <TouchableOpacity
           style={[

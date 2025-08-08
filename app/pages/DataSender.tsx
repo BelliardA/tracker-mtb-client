@@ -7,8 +7,9 @@ import {
   BarometerMeasurement,
   GyroscopeMeasurement,
 } from 'expo-sensors';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Button,
   StyleSheet,
@@ -24,10 +25,38 @@ import Localisation from '../components/dataGetter/Location';
 import { getDistance } from '../utils/distanceCalculate';
 
 export default function DataSender() {
-  const { authState } = useAuth();
+  const { authState, refreshAuthFromStorage } = useAuth();
   const router = useRouter();
 
+  const handleGoLogin = useCallback(() => {
+    router.replace('/pages/Login');
+  }, [router]);
+
+  const [authRetrying, setAuthRetrying] = useState(false);
+  const handleRetryAuth = useCallback(async () => {
+    setAuthRetrying(true);
+    try {
+      await refreshAuthFromStorage?.();
+    } finally {
+      setTimeout(() => setAuthRetrying(false), 400);
+    }
+  }, [refreshAuthFromStorage]);
+
   const [screen, setScreen] = useState<'start' | 'tracking' | 'end'>('start');
+
+  useEffect(() => {
+    if (
+      !authState?.loading &&
+      (!authState?.authenticated || !authState?.token)
+    ) {
+      refreshAuthFromStorage?.();
+    }
+  }, [
+    authState?.loading,
+    authState?.authenticated,
+    authState?.token,
+    refreshAuthFromStorage,
+  ]);
 
   const [isRunning, setIsRunning] = useState(false);
   const [startTime, setStartTime] = useState<string | null>(null);
@@ -207,11 +236,66 @@ export default function DataSender() {
   };
 
   if (authState?.loading) {
-    return <Text>Chargement de l’authentification…</Text>;
+    return (
+      <View
+        style={[
+          styles.container,
+          { justifyContent: 'center', alignItems: 'center' },
+        ]}
+      >
+        <ActivityIndicator size="large" />
+        <Text style={{ color: '#fff', marginTop: 12 }}>
+          Chargement de l’authentification…
+        </Text>
+      </View>
+    );
   }
 
   if (!authState?.authenticated || !authState.token) {
-    return <Text>Utilisateur non authentifié</Text>;
+    return (
+      <View
+        style={[
+          styles.container,
+          { justifyContent: 'center', alignItems: 'center' },
+        ]}
+      >
+        <Text style={{ color: '#fff', marginBottom: 12, textAlign: 'center' }}>
+          Utilisateur non authentifié.
+        </Text>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <TouchableOpacity
+            onPress={handleRetryAuth}
+            style={{
+              backgroundColor: '#444',
+              paddingVertical: 10,
+              paddingHorizontal: 16,
+              borderRadius: 8,
+              marginRight: 8,
+            }}
+            disabled={authRetrying}
+          >
+            {authRetrying ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={{ color: '#fff' }}>Rafraîchir</Text>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleGoLogin}
+            style={{
+              backgroundColor: '#BC6C25',
+              paddingVertical: 10,
+              paddingHorizontal: 16,
+              borderRadius: 8,
+            }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700' }}>
+              Aller au login
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
   }
 
   return (
