@@ -2,10 +2,12 @@ import { formatDistance } from '@/app/utils/adaptDistance';
 import { useAuth } from '@/context/AuthContext';
 import useApi from '@/hooks/useApi';
 import { User } from '@/types/user';
+import { useRouter } from 'expo-router';
 import { ChevronDownIcon, ChevronUpIcon, Pencil } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Image,
   Pressable,
@@ -24,6 +26,7 @@ const display = (v?: string | number | null) =>
 export default function Profile() {
   const { authState, onLogout } = useAuth();
   const { fetchWithAuth } = useApi();
+  const router = useRouter();
   const [user, setUser] = useState<User>({
     _id: '',
     email: '',
@@ -39,6 +42,35 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [infoOpen, setInfoOpen] = useState(false);
   const [editVisible, setEditVisible] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Déconnexion',
+      'Voulez-vous vraiment vous déconnecter ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Se déconnecter',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLogoutLoading(true);
+              if (onLogout) {
+                await onLogout();
+              }
+              router.replace('/pages/Login');
+            } catch (e) {
+              console.error('❌ Erreur lors de la déconnexion :', e);
+            } finally {
+              setLogoutLoading(false);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   useEffect(() => {
     async function load() {
@@ -171,8 +203,16 @@ export default function Profile() {
       </View>
       <SessionByUser userId={user._id} />
 
-      <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-        <Text style={styles.logoutText}>Se déconnecter</Text>
+      <TouchableOpacity
+        style={styles.logoutButton}
+        onPress={handleLogout}
+        disabled={logoutLoading}
+      >
+        {logoutLoading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.logoutText}>Se déconnecter</Text>
+        )}
       </TouchableOpacity>
 
       <EditProfileModal
