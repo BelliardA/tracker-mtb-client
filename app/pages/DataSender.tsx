@@ -7,11 +7,11 @@ import {
   BarometerMeasurement,
   GyroscopeMeasurement,
 } from 'expo-sensors';
+import { ArrowLeft } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Button,
   StyleSheet,
   Text,
   TextInput,
@@ -235,6 +235,19 @@ export default function DataSender() {
     return distance / 1000; // retour en km
   };
 
+  const handleCancelAndExit = useCallback(() => {
+    setIsRunning(false);
+    setStartTime(null);
+    setEndTime(null);
+    setTrackName('');
+    setTrackGyro([]);
+    setTrackBaro([]);
+    setTrackAccel([]);
+    setTrackLocation([]);
+    setScreen('start');
+    router.replace('/pages/Map');
+  }, [router]);
+
   if (authState?.loading) {
     return (
       <View
@@ -257,6 +270,15 @@ export default function DataSender() {
 
   return (
     <View style={styles.container}>
+      {screen === 'start' && (
+        <TouchableOpacity
+          style={{ position: 'absolute', top: 60, left: 20, zIndex: 20 }}
+          onPress={() => router.back()}
+          accessibilityLabel="Retour à la carte"
+        >
+          <ArrowLeft size={32} color="#fff" />
+        </TouchableOpacity>
+      )}
       <Localisation
         isRunning={isRunning}
         onLocationUpdate={(loc) => setTrackLocation((prev) => [...prev, loc])}
@@ -307,7 +329,32 @@ export default function DataSender() {
             value={trackName}
             onChangeText={setTrackName}
           />
-          <Button title="Envoyer" onPress={sendData} />
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+            <TouchableOpacity
+              onPress={handleCancelAndExit}
+              style={{
+                paddingVertical: 14,
+                paddingHorizontal: 22,
+                borderRadius: 10,
+                backgroundColor: '#444',
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700' }}>
+                Ne pas enregistrer
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={sendData}
+              style={{
+                paddingVertical: 14,
+                paddingHorizontal: 22,
+                borderRadius: 10,
+                backgroundColor: '#BC6C25',
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700' }}>Envoyer</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </View>

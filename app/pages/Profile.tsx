@@ -3,7 +3,12 @@ import { useAuth } from '@/context/AuthContext';
 import useApi from '@/hooks/useApi';
 import { User } from '@/types/user';
 import { Redirect, useRouter } from 'expo-router';
-import { ChevronDownIcon, ChevronUpIcon, Pencil } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  Pencil,
+} from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -165,6 +170,13 @@ export default function Profile() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={{ position: 'absolute', top: 60, left: 20, zIndex: 20 }}
+        onPress={() => router.back()}
+        accessibilityLabel="Retour à la carte"
+      >
+        <ArrowLeft color="#fff" size={32} />
+      </TouchableOpacity>
       <View style={styles.header}>
         {user.profilePictureUrl ? (
           <Image
@@ -178,7 +190,7 @@ export default function Profile() {
         </Text>
       </View>
       <TouchableOpacity
-        style={{ position: 'absolute', top: 20, right: 20 }}
+        style={{ position: 'absolute', top: 60, right: 20 }}
         onPress={() => setEditVisible(true)}
       >
         <Pencil color="#fff" size={24} />
@@ -294,7 +306,12 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1a1a1a', padding: 20 },
+  container: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
+    padding: 20,
+    paddingTop: 60,
+  },
   loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { flexDirection: 'column', alignItems: 'center', marginBottom: 20 },
   avatarLarge: {

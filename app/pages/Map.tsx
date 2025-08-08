@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   },
   profileButtonContainer: {
     position: 'absolute',
-    top: 50,
+    top: 60,
     left: 20,
     backgroundColor: colors.background,
     borderRadius: 50,
