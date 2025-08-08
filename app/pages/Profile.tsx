@@ -2,7 +2,7 @@ import { formatDistance } from '@/app/utils/adaptDistance';
 import { useAuth } from '@/context/AuthContext';
 import useApi from '@/hooks/useApi';
 import { User } from '@/types/user';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { ChevronDownIcon, ChevronUpIcon, Pencil } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
@@ -73,7 +73,6 @@ export default function Profile() {
               if (onLogout) {
                 await onLogout();
               }
-              router.replace('/pages/Login');
             } catch (e) {
               console.error('❌ Erreur lors de la déconnexion :', e);
             } finally {
@@ -117,27 +116,8 @@ export default function Profile() {
     );
   }
 
-  if (!authState?.authenticated || !authState.token) {
-    return (
-      <View style={[styles.loading, { padding: 20 }]}>
-        <Text style={{ color: '#fff', marginBottom: 12, textAlign: 'center' }}>
-          Vous n'êtes pas connecté.
-        </Text>
-        <TouchableOpacity
-          onPress={() => router.replace('/pages/Login')}
-          style={{
-            backgroundColor: '#BC6C25',
-            paddingVertical: 12,
-            paddingHorizontal: 18,
-            borderRadius: 8,
-          }}
-        >
-          <Text style={{ color: '#fff', fontWeight: '700' }}>
-            Aller au login
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
+  if (!authState?.loading && (!authState?.authenticated || !authState?.token)) {
+    return <Redirect href="/pages/Login" />;
   }
 
   if (loading) {

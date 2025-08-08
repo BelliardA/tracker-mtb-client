@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import ProfileSetup from './ProfileSetup';
@@ -8,14 +9,30 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showProfileSetup, setShowProfileSetup] = useState(false);
-  const { onLogin } = useAuth();
+  const { onLogin, authState } = useAuth();
+  const router = useRouter();
 
   const login = async () => {
+    setError('');
     const result = await onLogin!(email, password);
     if (result && result.error) {
       setError(result.msg || 'Erreur de connexion');
     }
   };
+
+  useEffect(() => {
+    if (!authState.loading && authState.authenticated) {
+      // Laisse l'AuthProvider finir la sauvegarde, puis navigue proprement
+      const id = setTimeout(() => {
+        try {
+          router.replace('/');
+        } catch (e) {
+          // noop
+        }
+      }, 0);
+      return () => clearTimeout(id);
+    }
+  }, [authState.loading, authState.authenticated, router]);
 
   if (showProfileSetup) {
     return <ProfileSetup email={email} password={password} />;

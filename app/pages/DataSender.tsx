@@ -1,7 +1,7 @@
 import { useAuth } from '@/context/AuthContext';
 import * as FileSystem from 'expo-file-system';
 import { LocationObject } from 'expo-location';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import {
   AccelerometerMeasurement,
   BarometerMeasurement,
@@ -251,51 +251,8 @@ export default function DataSender() {
     );
   }
 
-  if (!authState?.authenticated || !authState.token) {
-    return (
-      <View
-        style={[
-          styles.container,
-          { justifyContent: 'center', alignItems: 'center' },
-        ]}
-      >
-        <Text style={{ color: '#fff', marginBottom: 12, textAlign: 'center' }}>
-          Utilisateur non authentifié.
-        </Text>
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <TouchableOpacity
-            onPress={handleRetryAuth}
-            style={{
-              backgroundColor: '#444',
-              paddingVertical: 10,
-              paddingHorizontal: 16,
-              borderRadius: 8,
-              marginRight: 8,
-            }}
-            disabled={authRetrying}
-          >
-            {authRetrying ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={{ color: '#fff' }}>Rafraîchir</Text>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleGoLogin}
-            style={{
-              backgroundColor: '#BC6C25',
-              paddingVertical: 10,
-              paddingHorizontal: 16,
-              borderRadius: 8,
-            }}
-          >
-            <Text style={{ color: '#fff', fontWeight: '700' }}>
-              Aller au login
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
+  if (!authState?.loading && (!authState?.authenticated || !authState?.token)) {
+    return <Redirect href="/pages/Login" />;
   }
 
   return (
@@ -310,9 +267,11 @@ export default function DataSender() {
       <Gyro isRunning={isRunning} setTrack={setTrackGyro} />
 
       {screen === 'start' && (
-        <TouchableOpacity style={styles.startButton} onPress={toggleRunning}>
-          <Text style={styles.startButtonText}>Démarrer le suivi</Text>
-        </TouchableOpacity>
+        <View style={styles.dashboard}>
+          <TouchableOpacity style={styles.startButton} onPress={toggleRunning}>
+            <Text style={styles.startButtonText}>Démarrer le suivi</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {screen === 'tracking' && (
