@@ -2,7 +2,6 @@ import { formatDistance } from '@/app/utils/adaptDistance';
 import { useAuth } from '@/context/AuthContext';
 import useApi from '@/hooks/useApi';
 import { User } from '@/types/user';
-import { useRouter } from 'expo-router';
 import { ChevronDownIcon, ChevronUpIcon, Pencil } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
@@ -15,12 +14,16 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import EditProfileModal from '../components/user/EditProfileModal';
 import SessionByUser from '../components/user/SessionByUser';
+
+// Helper to safely render optional values
+const display = (v?: string | number | null) =>
+  v === null || v === undefined || v === '' ? '--' : String(v);
 
 export default function Profile() {
   const { authState, onLogout } = useAuth();
   const { fetchWithAuth } = useApi();
-  const router = useRouter();
   const [user, setUser] = useState<User>({
     _id: '',
     email: '',
@@ -35,6 +38,7 @@ export default function Profile() {
   } as User);
   const [loading, setLoading] = useState(true);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [editVisible, setEditVisible] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -78,7 +82,7 @@ export default function Profile() {
       </View>
       <TouchableOpacity
         style={{ position: 'absolute', top: 20, right: 20 }}
-        onPress={() => router.push('/pages/Editprofile')}
+        onPress={() => setEditVisible(true)}
       >
         <Pencil color="#fff" size={24} />
       </TouchableOpacity>
@@ -92,13 +96,17 @@ export default function Profile() {
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statVal}>
-              {formatDistance(user.totalDistance)}
+              {typeof user.totalDistance === 'number'
+                ? formatDistance(user.totalDistance)
+                : '--'}
             </Text>
             <Text style={styles.statLabel}>Distance</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statVal}>
-              {user.bestTrackTime?.time ?? '--'} s
+              {typeof user.bestTrackTime?.time === 'number'
+                ? `${user.bestTrackTime.time} s`
+                : '--'}
             </Text>
             <Text style={styles.statLabel}>Best Run</Text>
           </View>
@@ -137,27 +145,27 @@ export default function Profile() {
         >
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Nom</Text>
-            <Text style={styles.infoValue}>{user.lastName}</Text>
+            <Text style={styles.infoValue}>{display(user.lastName)}</Text>
           </View>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Prénom</Text>
-            <Text style={styles.infoValue}>{user.firstName}</Text>
+            <Text style={styles.infoValue}>{display(user.firstName)}</Text>
           </View>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Âge</Text>
-            <Text style={styles.infoValue}>{user.age}</Text>
+            <Text style={styles.infoValue}>{display(user.age)}</Text>
           </View>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Genre</Text>
-            <Text style={styles.infoValue}>{user.gender}</Text>
+            <Text style={styles.infoValue}>{display(user.gender)}</Text>
           </View>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Type</Text>
-            <Text style={styles.infoValue}>{user.bikeType}</Text>
+            <Text style={styles.infoValue}>{display(user.bikeType)}</Text>
           </View>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Style</Text>
-            <Text style={styles.infoValue}>{user.ridingStyle}</Text>
+            <Text style={styles.infoValue}>{display(user.ridingStyle)}</Text>
           </View>
         </Animated.View>
       </View>
@@ -166,6 +174,16 @@ export default function Profile() {
       <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
         <Text style={styles.logoutText}>Se déconnecter</Text>
       </TouchableOpacity>
+
+      <EditProfileModal
+        visible={editVisible}
+        user={user}
+        onClose={() => setEditVisible(false)}
+        onSaved={(updated) => {
+          setUser((prev) => ({ ...prev, ...(updated || {}) }));
+          setEditVisible(false);
+        }}
+      />
     </View>
   );
 }
