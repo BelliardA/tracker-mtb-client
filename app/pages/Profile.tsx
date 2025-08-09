@@ -16,6 +16,8 @@ import {
   Animated,
   Image,
   Pressable,
+  SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -169,148 +171,166 @@ export default function Profile() {
   }
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={{ position: 'absolute', top: 60, left: 20, zIndex: 20 }}
-        onPress={() => router.back()}
-        accessibilityLabel="Retour à la carte"
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        nestedScrollEnabled
+        showsVerticalScrollIndicator={false}
       >
-        <ArrowLeft color="#fff" size={32} />
-      </TouchableOpacity>
-      <View style={styles.header}>
-        {user.profilePictureUrl ? (
-          <Image
-            source={{ uri: user.profilePictureUrl }}
-            style={styles.avatarLarge}
+        <View style={styles.container}>
+          <TouchableOpacity
+            style={{ position: 'absolute', top: 10, left: 20, zIndex: 20 }}
+            onPress={() => router.back()}
+            accessibilityLabel="Retour à la carte"
+          >
+            <ArrowLeft color="#fff" size={32} />
+          </TouchableOpacity>
+          <View style={styles.header}>
+            {user.profilePictureUrl ? (
+              <Image
+                source={{ uri: user.profilePictureUrl }}
+                style={styles.avatarLarge}
+              />
+            ) : null}
+            <Text style={styles.nickname}>{user.nickname}</Text>
+            <Text style={styles.bike}>
+              {user.bikeBrand} {user.bikeModel}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={{ position: 'absolute', top: 10, right: 20 }}
+            onPress={() => setEditVisible(true)}
+          >
+            <Pencil color="#fff" size={24} />
+          </TouchableOpacity>
+
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Statistiques</Text>
+            <View style={styles.stats}>
+              <View style={styles.statItem}>
+                <Text style={styles.statVal}>{user.totalRides || 0}</Text>
+                <Text style={styles.statLabel}>Rides</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statVal}>
+                  {typeof user.totalDistance === 'number'
+                    ? formatDistance(user.totalDistance)
+                    : '--'}
+                </Text>
+                <Text style={styles.statLabel}>Distance</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statVal}>
+                  {typeof user.bestTrackTime?.time === 'number'
+                    ? `${user.bestTrackTime.time} s`
+                    : '--'}
+                </Text>
+                <Text style={styles.statLabel}>Best Run</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.card}>
+            <Pressable
+              style={styles.depliantHeader}
+              onPress={() => setInfoOpen(!infoOpen)}
+            >
+              <Text style={styles.sectionTitle}>Informations personnelles</Text>
+              {infoOpen ? (
+                <ChevronUpIcon color="#fff" size={20} />
+              ) : (
+                <ChevronDownIcon color="#fff" size={20} />
+              )}
+            </Pressable>
+            <Animated.View
+              style={[
+                {
+                  overflow: 'hidden',
+                  height: infoOpen ? undefined : 0,
+                  opacity: infoOpen ? 1 : 0,
+                  transform: [{ scaleY: infoOpen ? 1 : 0.95 }],
+                  transitionProperty: 'all',
+                  transitionDuration: '300ms',
+                },
+                {
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  justifyContent: 'space-between',
+                  marginTop: 10,
+                },
+              ]}
+            >
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Nom</Text>
+                <Text style={styles.infoValue}>{display(user.lastName)}</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Prénom</Text>
+                <Text style={styles.infoValue}>{display(user.firstName)}</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Âge</Text>
+                <Text style={styles.infoValue}>{display(user.age)}</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Genre</Text>
+                <Text style={styles.infoValue}>{display(user.gender)}</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Type</Text>
+                <Text style={styles.infoValue}>{display(user.bikeType)}</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Style</Text>
+                <Text style={styles.infoValue}>
+                  {display(user.ridingStyle)}
+                </Text>
+              </View>
+            </Animated.View>
+          </View>
+          <SessionByUser userId={user._id} />
+
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+            disabled={logoutLoading}
+          >
+            {logoutLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.logoutText}>Se déconnecter</Text>
+            )}
+          </TouchableOpacity>
+
+          <EditProfileModal
+            visible={editVisible}
+            user={user}
+            onClose={() => setEditVisible(false)}
+            onSaved={(updated) => {
+              setUser((prev) => ({ ...prev, ...(updated || {}) }));
+              setEditVisible(false);
+            }}
           />
-        ) : null}
-        <Text style={styles.nickname}>{user.nickname}</Text>
-        <Text style={styles.bike}>
-          {user.bikeBrand} {user.bikeModel}
-        </Text>
-      </View>
-      <TouchableOpacity
-        style={{ position: 'absolute', top: 60, right: 20 }}
-        onPress={() => setEditVisible(true)}
-      >
-        <Pencil color="#fff" size={24} />
-      </TouchableOpacity>
-
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Statistiques</Text>
-        <View style={styles.stats}>
-          <View style={styles.statItem}>
-            <Text style={styles.statVal}>{user.totalRides || 0}</Text>
-            <Text style={styles.statLabel}>Rides</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statVal}>
-              {typeof user.totalDistance === 'number'
-                ? formatDistance(user.totalDistance)
-                : '--'}
-            </Text>
-            <Text style={styles.statLabel}>Distance</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statVal}>
-              {typeof user.bestTrackTime?.time === 'number'
-                ? `${user.bestTrackTime.time} s`
-                : '--'}
-            </Text>
-            <Text style={styles.statLabel}>Best Run</Text>
-          </View>
+          <View style={{ height: 40 }} />
         </View>
-      </View>
-
-      <View style={styles.card}>
-        <Pressable
-          style={styles.depliantHeader}
-          onPress={() => setInfoOpen(!infoOpen)}
-        >
-          <Text style={styles.sectionTitle}>Informations personnelles</Text>
-          {infoOpen ? (
-            <ChevronUpIcon color="#fff" size={20} />
-          ) : (
-            <ChevronDownIcon color="#fff" size={20} />
-          )}
-        </Pressable>
-        <Animated.View
-          style={[
-            {
-              overflow: 'hidden',
-              height: infoOpen ? undefined : 0,
-              opacity: infoOpen ? 1 : 0,
-              transform: [{ scaleY: infoOpen ? 1 : 0.95 }],
-              transitionProperty: 'all',
-              transitionDuration: '300ms',
-            },
-            {
-              flexDirection: 'row',
-              flexWrap: 'wrap',
-              justifyContent: 'space-between',
-              marginTop: 10,
-            },
-          ]}
-        >
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Nom</Text>
-            <Text style={styles.infoValue}>{display(user.lastName)}</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Prénom</Text>
-            <Text style={styles.infoValue}>{display(user.firstName)}</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Âge</Text>
-            <Text style={styles.infoValue}>{display(user.age)}</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Genre</Text>
-            <Text style={styles.infoValue}>{display(user.gender)}</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Type</Text>
-            <Text style={styles.infoValue}>{display(user.bikeType)}</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Style</Text>
-            <Text style={styles.infoValue}>{display(user.ridingStyle)}</Text>
-          </View>
-        </Animated.View>
-      </View>
-      <SessionByUser userId={user._id} />
-
-      <TouchableOpacity
-        style={styles.logoutButton}
-        onPress={handleLogout}
-        disabled={logoutLoading}
-      >
-        {logoutLoading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.logoutText}>Se déconnecter</Text>
-        )}
-      </TouchableOpacity>
-
-      <EditProfileModal
-        visible={editVisible}
-        user={user}
-        onClose={() => setEditVisible(false)}
-        onSaved={(updated) => {
-          setUser((prev) => ({ ...prev, ...(updated || {}) }));
-          setEditVisible(false);
-        }}
-      />
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
+  },
+  scrollContent: {
+    padding: 20,
+    paddingTop: 20,
+    paddingBottom: 50,
+  },
   container: {
     flex: 1,
     backgroundColor: '#1a1a1a',
-    padding: 20,
-    paddingTop: 60,
   },
   loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { flexDirection: 'column', alignItems: 'center', marginBottom: 20 },
