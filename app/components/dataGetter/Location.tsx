@@ -10,7 +10,7 @@ interface LocalisationProps {
 export default function Localisation({
   isRunning,
   onLocationUpdate,
-  intervalMs = 150,
+  intervalMs = 300,
 }: LocalisationProps) {
   const locationSubscription = useRef<Location.LocationSubscription | null>(
     null

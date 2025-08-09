@@ -16,7 +16,7 @@ export default function Gyro({ isRunning, setTrack }: GyroProps) {
   );
 
   // Met à jour toutes les 50ms
-  Gyroscope.setUpdateInterval(50);
+  Gyroscope.setUpdateInterval(100);
 
   useEffect(() => {
     if (!isRunning) {

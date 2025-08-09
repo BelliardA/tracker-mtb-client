@@ -245,7 +245,7 @@ export default function DataSender() {
     setTrackAccel([]);
     setTrackLocation([]);
     setScreen('start');
-    router.replace('/pages/Map');
+    router.back();
   }, [router]);
 
   if (authState?.loading) {

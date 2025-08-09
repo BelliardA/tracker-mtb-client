@@ -19,7 +19,7 @@ export default function Accelerometre({
     typeof Accelerometer.addListener
   > | null>(null);
 
-  Accelerometer.setUpdateInterval(50);
+  Accelerometer.setUpdateInterval(150);
 
   useEffect(() => {
     if (!isRunning) {
