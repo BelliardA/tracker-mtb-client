@@ -1,5 +1,5 @@
 import { RegisterPayload, useAuth } from '@/context/AuthContext';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -52,14 +52,12 @@ const ChipSelect = ({
   </View>
 );
 
-type ProfileSetupProps = {
-  email: string;
-  password: string;
-};
-
-export default function ProfileSetup({ email, password }: ProfileSetupProps) {
+export default function ProfileSetup() {
   const { onRegister, onLogin } = useAuth();
   const { authState } = useAuth();
+  const params = useLocalSearchParams<{ email?: string; password?: string }>();
+  const email = String(params.email ?? '');
+  const password = String(params.password ?? '');
   const router = useRouter();
   const [waitingAuth, setWaitingAuth] = useState(false);
 
