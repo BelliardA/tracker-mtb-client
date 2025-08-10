@@ -57,6 +57,7 @@ const SNAP_CLOSED = 0;
 
 export interface TrackDetailsRef {
   closeSheet: () => void;
+  closeSheetAsync: () => Promise<void>;
 }
 
 /** Map score (0-100) -> difficulty label for UI */
@@ -316,6 +317,7 @@ function TrackDetailsInner(
   ref: React.Ref<TrackDetailsRef>
 ) {
   const animatedHeight = useRef(new Animated.Value(SNAP_CLOSED)).current;
+  const closeResolvers = useRef<Array<() => void>>([]);
   const lastSnapPoint = useRef(SNAP_CLOSED);
   const [isVisible, setIsVisible] = useState(false);
   const [session, setSession] = useState<SessionDTO | null>(null);
@@ -328,14 +330,17 @@ function TrackDetailsInner(
 
   // Fetch the track
   useEffect(() => {
+    let alive = true;
     const fetchTrack = async () => {
       if (!trackId) return;
       setLoading(true);
       setError(null);
       try {
         const s: SessionDTO = await api.fetchWithAuth(`/session/${trackId}`);
+        if (!alive) return;
         setSession(s);
       } catch (e: any) {
+        if (!alive) return;
         setError(e?.message ?? 'Erreur inconnue');
       } finally {
         setLoading(false);
@@ -343,36 +348,44 @@ function TrackDetailsInner(
     };
 
     fetchTrack();
+    return () => {
+      alive = false;
+    };
   }, [trackId, authState?.token]);
 
   useEffect(() => {
+    let alive = true;
     const loadAuthor = async () => {
       try {
         if (!session?.userId) {
-          setAuthor(null);
+          if (alive) setAuthor(null);
           return;
         }
         // useApi may return either `{ data }` or the raw payload; support both
         const data: any = await api.fetchWithAuth(`/users/${session.userId}`);
+        if (!alive) return;
         if (data) {
           setAuthor({
             _id: data._id || data.id || '',
-            nickname:
-              data.nickname || data.username || data.name || 'Utilisateur',
-            profilePictureUrl:
-              data.profilePictureUrl || data.avatarUrl || undefined,
+            nickname: data.nickname || 'Utilisateur',
+            profilePictureUrl: data.profilePictureUrl,
           });
         } else {
           setAuthor(null);
         }
       } catch (e) {
-        console.warn('Impossible de charger le profil auteur', e);
-        setAuthor(null);
+        if (alive) {
+          console.warn('Impossible de charger le profil auteur', e);
+          setAuthor(null);
+        }
       }
     };
 
     loadAuthor();
-  }, [session?.userId, api]);
+    return () => {
+      alive = false;
+    };
+  }, [session?.userId]);
 
   const animateTo = useCallback(
     (value: number) => {
@@ -385,6 +398,8 @@ function TrackDetailsInner(
         if (value === SNAP_CLOSED) {
           setIsVisible(false);
           onClose();
+          const resolver = closeResolvers.current.shift();
+          if (resolver) resolver();
         }
       });
     },
@@ -393,6 +408,11 @@ function TrackDetailsInner(
 
   useImperativeHandle(ref, () => ({
     closeSheet: () => animateTo(SNAP_CLOSED),
+    closeSheetAsync: () =>
+      new Promise<void>((resolve) => {
+        closeResolvers.current.push(resolve);
+        animateTo(SNAP_CLOSED);
+      }),
   }));
 
   const panResponder = useRef(
@@ -420,12 +440,17 @@ function TrackDetailsInner(
 
   useEffect(() => {
     if (visible) {
-      setIsVisible(true);
-      animateTo(SNAP_MIDDLE);
+      if (!isVisible) setIsVisible(true);
+      // Snap to middle only if we were closed
+      if (lastSnapPoint.current === SNAP_CLOSED) {
+        animateTo(SNAP_MIDDLE);
+      }
     } else {
-      animateTo(SNAP_CLOSED);
+      if (lastSnapPoint.current !== SNAP_CLOSED) {
+        animateTo(SNAP_CLOSED);
+      }
     }
-  }, [visible, animateTo]);
+  }, [visible, isVisible, animateTo]);
 
   const handleRidePress = async () => {
     if (!session) return;
@@ -646,7 +671,9 @@ function TrackDetailsInner(
   );
 }
 
-export default forwardRef(TrackDetailsInner);
+export default forwardRef<TrackDetailsRef, TrackDetailsProps>(
+  TrackDetailsInner
+);
 
 const styles = StyleSheet.create({
   container: {

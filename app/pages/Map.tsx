@@ -21,7 +21,7 @@ export default function Map() {
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
 
   const mapRef = useRef<MapView | null>(null);
-  const trackDetailsRef = useRef<TrackDetailsRef>(null);
+  const trackDetailsRef = useRef<TrackDetailsRef | null>(null);
 
   // Reset centering timer whenever user interacts
   const handleUserInteraction = () => {
@@ -33,18 +33,33 @@ export default function Map() {
   };
 
   // Focus and zoom the map to fit the entire track
-  const handleTrackPress = (track: any) => {
-    // Extract coordinates from the track
-    setSelectedTrackId(track._id);
-    const coords = track.sensors.gps.map((point: any) => ({
-      latitude: point.coords.latitude,
-      longitude: point.coords.longitude,
-    }));
-    if (coords.length > 0) {
-      mapRef.current?.fitToCoordinates(coords, {
-        edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
-        animated: true,
-      });
+  const handleTrackPress = async (track: any) => {
+    const selectAndZoom = () => {
+      setSelectedTrackId(track._id);
+      const coords = track.sensors.gps.map((point: any) => ({
+        latitude: point.coords.latitude,
+        longitude: point.coords.longitude,
+      }));
+      if (coords.length > 0) {
+        mapRef.current?.fitToCoordinates(coords, {
+          edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+          animated: true,
+        });
+      }
+    };
+
+    if (selectedTrackId && selectedTrackId !== track._id) {
+      // Close the current sheet first, then open the new one
+      if (trackDetailsRef.current?.closeSheetAsync) {
+        await trackDetailsRef.current.closeSheetAsync();
+        selectAndZoom();
+      } else {
+        // Fallback: close immediately, then switch
+        trackDetailsRef.current?.closeSheet?.();
+        setTimeout(selectAndZoom, 320);
+      }
+    } else {
+      selectAndZoom();
     }
   };
 
@@ -155,7 +170,9 @@ export default function Map() {
         ref={mapRef}
         onTouchStart={handleUserInteraction}
         onPanDrag={handleUserInteraction}
-        onPress={() => {
+        onPress={(e) => {
+          // If we're switching tracks via polyline tap, polyline's onPress will handle it.
+          // Default tap on empty map closes the sheet.
           if (selectedTrackId !== null) {
             trackDetailsRef.current?.closeSheet();
           }
@@ -215,6 +232,7 @@ export default function Map() {
       {selectedTrackId != null && (
         <TrackDetails
           ref={trackDetailsRef}
+          key={selectedTrackId}
           trackId={selectedTrackId}
           visible={selectedTrackId !== null}
           onClose={() => setSelectedTrackId(null)}
