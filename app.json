@@ -1,10 +1,11 @@
 {
   "expo": {
-    "name": "tracker-app",
-    "slug": "tracker-app",
+    "name": "Tracker MTB",
+    "slug": "tracker-mtb",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "trackerapp",
+    "icon": "./assets/images/splash-icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -15,14 +16,16 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/splash-icon.png",
+        "backgroundColor": "#FEFAE0"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.tutur_the_chop.trackerapp"
     },
     "web": {
       "bundler": "metro",
-      "output": "static"
+      "output": "static",
+      "favicon": "./assets/images/splash-icon.png"
     },
     "plugins": [
       "expo-router",
@@ -32,7 +35,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#FEFAE0"
         }
       ],
       "expo-web-browser"

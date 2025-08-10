@@ -316,7 +316,7 @@ export default function ProfileSetup() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1a1a1a' },
+  container: { flex: 1, backgroundColor: '#1a1a1a', paddingTop: 60 },
   content: { padding: 16, paddingBottom: 40 },
   title: { color: '#fff', fontSize: 22, fontWeight: '800', marginBottom: 8 },
   sectionTitle: {
