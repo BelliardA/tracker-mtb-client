@@ -99,7 +99,7 @@ export default function Map() {
           },
           (location) => {
             setLocation(location.coords);
-            if (shouldCenter) {
+            if (shouldCenter && selectedTrackId == null) {
               mapRef.current?.animateCamera({
                 center: {
                   latitude: location.coords.latitude,
