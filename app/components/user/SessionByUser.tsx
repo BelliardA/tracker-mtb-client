@@ -4,14 +4,23 @@ import { Session } from '@/types/session';
 import { router } from 'expo-router';
 import { Trash2 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export default function SessionByUser({
   userId,
   canDelete = false,
+  onSelectSession,
 }: {
   userId: string;
   canDelete?: boolean;
+  onSelectSession?: (sessionId: string) => void;
 }) {
   const { fetchWithAuth } = useApi();
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -22,10 +31,11 @@ export default function SessionByUser({
     const load = async () => {
       if (!userId) {
         console.warn('⚠️ Aucun userId fourni à SessionByUser.');
+        setLoading(false);
         return;
       }
       try {
-        const data = await fetchWithAuth(`/session/user/${userId}`);
+        const data: Session[] = await fetchWithAuth(`/session/user/${userId}`);
         setSessions(
           data.sort(
             (a: any, b: any) =>
@@ -81,26 +91,51 @@ export default function SessionByUser({
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Dernières pistes</Text>
-      {sessions.map((session) =>
-        deletingSessionIds.includes(session._id) ? null : (
-          <View key={session._id} style={styles.sessionCard}>
+      {sessions.map((session) => {
+        const id = String(session._id);
+        const isDeleting = deletingSessionIds.includes(id);
+        if (isDeleting) return null;
+
+        return (
+          <Pressable
+            key={id}
+            accessibilityRole="button"
+            accessibilityLabel={`Ouvrir la piste ${session.name}`}
+            onPress={() => {
+              if (onSelectSession) {
+                onSelectSession(id);
+              } else {
+                // Fallback: ouvre la map et affiche TrackDetails sur cette piste
+                router.push({
+                  pathname: '/pages/Map',
+                  params: { focusTrackId: id, openDetails: '1' },
+                });
+              }
+            }}
+            android_ripple={{ color: '#222', borderless: false }}
+            style={({ pressed }) => [
+              styles.sessionCard,
+              pressed && { transform: [{ scale: 0.995 }], opacity: 0.95 },
+            ]}
+          >
             <Text style={styles.sessionName}>{session.name}</Text>
             <Text style={styles.sessionMeta}>
               {new Date(session.startTime).toLocaleString()} -{' '}
               {formatDistance(session.totalDistance)}
             </Text>
+
             {canDelete && session.userId === userId && (
               <TouchableOpacity
-                onPress={() => handleDelete(session._id)}
+                onPress={() => handleDelete(id)}
                 style={styles.trashIcon}
                 accessibilityLabel="Supprimer cette piste"
               >
                 <Trash2 color="#BC6C25" size={20} />
               </TouchableOpacity>
             )}
-          </View>
-        )
-      )}
+          </Pressable>
+        );
+      })}
     </View>
   );
 }

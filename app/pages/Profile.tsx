@@ -339,7 +339,16 @@ export default function Profile() {
           </View>
           {/* Only allow deletion for the owner (current viewer = owner).
               We pass a hint prop `canDelete` for the child to decide whether to render delete actions. */}
-          <SessionByUser userId={user._id} canDelete={!viewingOther} />
+          <SessionByUser
+            userId={user._id}
+            canDelete={!viewingOther}
+            onSelectSession={(sessionId: string) => {
+              router.push({
+                pathname: '/pages/Map',
+                params: { trackId: sessionId },
+              });
+            }}
+          />
 
           {!viewingOther && (
             <TouchableOpacity

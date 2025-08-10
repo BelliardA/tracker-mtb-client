@@ -2,7 +2,7 @@ import { colors } from '@/app/styles/colors';
 import { useAuth } from '@/context/AuthContext';
 import useApi from '@/hooks/useApi';
 import * as Location from 'expo-location';
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
@@ -22,6 +22,11 @@ export default function Map() {
 
   const mapRef = useRef<MapView | null>(null);
   const trackDetailsRef = useRef<TrackDetailsRef | null>(null);
+
+  const params = useLocalSearchParams<{ trackId?: string }>();
+  const pendingTrackIdRef = useRef<string | null>(
+    typeof params.trackId === 'string' ? params.trackId : null
+  );
 
   // Reset centering timer whenever user interacts
   const handleUserInteraction = () => {
@@ -70,6 +75,28 @@ export default function Map() {
       if (data && Array.isArray(data)) {
         setTracks(data);
         console.log('🔄 Pistes chargées :', data.length);
+        // Ouvrir automatiquement une piste spécifique si demandée via navigation
+        try {
+          const wanted = pendingTrackIdRef.current;
+          if (wanted) {
+            const track = data.find((t: any) => t._id === wanted);
+            if (track) {
+              setSelectedTrackId(track._id);
+              const coords = track.sensors.gps.map((p: any) => ({
+                latitude: p.coords.latitude,
+                longitude: p.coords.longitude,
+              }));
+              if (coords.length > 0) {
+                mapRef.current?.fitToCoordinates(coords, {
+                  edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+                  animated: true,
+                });
+              }
+            }
+            // Consommation one-shot
+            pendingTrackIdRef.current = null;
+          }
+        } catch {}
       } else {
         console.warn('⚠️ Données inattendues pour les pistes :', data);
       }
@@ -141,6 +168,30 @@ export default function Map() {
       if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
     };
   }, [shouldCenter, fetchTracks, authState?.authenticated, authState?.token]);
+
+  useEffect(() => {
+    if (typeof params.trackId === 'string') {
+      pendingTrackIdRef.current = params.trackId;
+
+      if (tracks.length > 0) {
+        const track = tracks.find((t) => t._id === params.trackId);
+        if (track) {
+          setSelectedTrackId(track._id);
+          const coords = track.sensors.gps.map((p: any) => ({
+            latitude: p.coords.latitude,
+            longitude: p.coords.longitude,
+          }));
+          if (coords.length > 0) {
+            mapRef.current?.fitToCoordinates(coords, {
+              edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+              animated: true,
+            });
+          }
+          pendingTrackIdRef.current = null;
+        }
+      }
+    }
+  }, [params.trackId, tracks]);
 
   if (authState?.loading) {
     return (
