@@ -6,7 +6,13 @@ import { Trash2 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-export default function SessionByUser({ userId }: { userId: string }) {
+export default function SessionByUser({
+  userId,
+  canDelete = false,
+}: {
+  userId: string;
+  canDelete?: boolean;
+}) {
   const { fetchWithAuth } = useApi();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,10 +89,11 @@ export default function SessionByUser({ userId }: { userId: string }) {
               {new Date(session.startTime).toLocaleString()} -{' '}
               {formatDistance(session.totalDistance)}
             </Text>
-            {session.userId === userId && (
+            {canDelete && session.userId === userId && (
               <TouchableOpacity
                 onPress={() => handleDelete(session._id)}
                 style={styles.trashIcon}
+                accessibilityLabel="Supprimer cette piste"
               >
                 <Trash2 color="#BC6C25" size={20} />
               </TouchableOpacity>

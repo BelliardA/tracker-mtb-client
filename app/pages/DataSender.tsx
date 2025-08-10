@@ -1,4 +1,5 @@
 import { useAuth } from '@/context/AuthContext';
+import useApi from '@/hooks/useApi';
 import * as FileSystem from 'expo-file-system';
 import { LocationObject } from 'expo-location';
 import { Redirect, useRouter } from 'expo-router';
@@ -27,6 +28,7 @@ import { getDistance } from '../utils/distanceCalculate';
 export default function DataSender() {
   const { authState, refreshAuthFromStorage } = useAuth();
   const router = useRouter();
+  const { fetchWithAuth } = useApi();
 
   const handleGoLogin = useCallback(() => {
     router.replace('/pages/Login');
@@ -82,6 +84,18 @@ export default function DataSender() {
     setIsRunning(!isRunning);
   };
 
+  const postUserStats = useCallback(async (): Promise<void> => {
+    try {
+      await fetchWithAuth('/users/me/stats', { method: 'POST' });
+      console.log('✅ Stats utilisateur mises à jour');
+    } catch (err) {
+      console.warn(
+        '⚠️ Impossible de mettre à jour les stats utilisateur :',
+        err
+      );
+    }
+  }, [fetchWithAuth]);
+
   const sendData = async () => {
     console.log('🚀 Envoi en cours...');
     if (!startTime || !endTime) {
@@ -135,6 +149,9 @@ export default function DataSender() {
         return;
       }
       console.log('✅ Session envoyée avec succès :', result);
+      try {
+        await postUserStats();
+      } catch {}
       Alert.alert('Succès', 'Track envoyée !');
       router.replace('/pages/Map');
     } catch (error) {
@@ -177,13 +194,16 @@ export default function DataSender() {
 
         const result = await response.json();
         console.log('✅ Session offline envoyée :', result);
+        try {
+          await postUserStats();
+        } catch {}
         await FileSystem.deleteAsync(STORAGE_PATH);
       } catch (error) {
         console.error("❌ Échec d'envoi de la session offline :", error);
       }
     };
     sendOfflineDataIfExists();
-  }, [STORAGE_PATH, authState?.token]);
+  }, [STORAGE_PATH, authState?.token, postUserStats]);
 
   const getCurrentSpeed = () => {
     const latest = trackLocation.at(-1);

@@ -522,6 +522,11 @@ function TrackDetailsInner(
 
   const analysis = session?.analysis;
 
+  const goToAuthorProfile = useCallback(() => {
+    if (!author?._id) return;
+    router.push({ pathname: '/pages/Profile', params: { userId: author._id } });
+  }, [author?._id]);
+
   if (!isVisible) return null;
 
   const difficultyLabel = mapScoreToDifficulty(
@@ -556,15 +561,16 @@ function TrackDetailsInner(
           <ElevationLegend />
           <View style={styles.metaBox}>
             {author?.profilePictureUrl && author?.nickname ? (
-              <View
+              <Pressable
+                onPress={goToAuthorProfile}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
               >
                 <Image
                   source={{ uri: author.profilePictureUrl }}
                   style={styles.avatar}
                 />
-                <Text style={styles.authorName}>{author.nickname}</Text>
-              </View>
+                <Text style={styles.authorLink}>{author.nickname}</Text>
+              </Pressable>
             ) : (
               <View
                 style={[
@@ -707,6 +713,12 @@ const styles = StyleSheet.create({
   avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#eee' },
   authorLabel: { fontSize: 12, color: '#6b7280' },
   authorName: { fontSize: 16, fontWeight: '600', color: '#111827' },
+  authorLink: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2563eb',
+    textDecorationLine: 'underline',
+  },
   badgeRow: { flexDirection: 'row', gap: 10 },
   badge: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999 },
   badgeDistance: { backgroundColor: '#DDA15E' },

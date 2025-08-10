@@ -2,7 +2,7 @@ import { formatDistance } from '@/app/utils/adaptDistance';
 import { useAuth } from '@/context/AuthContext';
 import useApi from '@/hooks/useApi';
 import { User } from '@/types/user';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowLeft,
   ChevronDownIcon,
@@ -31,6 +31,10 @@ const display = (v?: string | number | null) =>
   v === null || v === undefined || v === '' ? '--' : String(v);
 
 export default function Profile() {
+  const params = useLocalSearchParams<{ userId?: string }>();
+  const viewedUserId =
+    typeof params.userId === 'string' ? params.userId : undefined;
+  const viewingOther = !!viewedUserId;
   const { authState, onLogout, refreshAuthFromStorage } = useAuth();
   useEffect(() => {
     if (
@@ -95,9 +99,42 @@ export default function Profile() {
   useEffect(() => {
     async function load() {
       try {
-        await fetchWithAuth('/users/me/stats', { method: 'POST' });
-        const profile = await fetchWithAuth('/users/me');
-        setUser(profile as User);
+        if (!viewingOther) {
+          await fetchWithAuth('/users/me/stats', { method: 'POST' });
+          const profile = await fetchWithAuth('/users/me');
+          setUser(profile as User);
+        } else if (viewedUserId) {
+          // 1) Fetch public profile of another user
+          const profile = (await fetchWithAuth(
+            `/users/${viewedUserId}`
+          )) as User;
+
+          // 2) Try to fetch that user's stats (server should expose GET /users/:id/stats)
+          //    If the route does not exist yet, this will be caught and we will still display the profile.
+          try {
+            const stats = await fetchWithAuth(`/users/${viewedUserId}/stats`);
+            // Expected shape: { totalRides: number, totalDistance: number, bestTrackTime?: { sessionId: string, time: number } }
+            setUser({
+              ...profile,
+              totalRides:
+                typeof stats?.totalRides === 'number'
+                  ? stats.totalRides
+                  : (profile.totalRides ?? 0),
+              totalDistance:
+                typeof stats?.totalDistance === 'number'
+                  ? stats.totalDistance
+                  : (profile.totalDistance ?? 0),
+              bestTrackTime:
+                stats?.bestTrackTime &&
+                typeof stats.bestTrackTime?.time === 'number'
+                  ? stats.bestTrackTime
+                  : (profile.bestTrackTime ?? { sessionId: '', time: 0 }),
+            } as User);
+          } catch (e) {
+            // If stats route isn't available, fall back to profile-only data
+            setUser(profile as User);
+          }
+        }
         setLoadError(null);
       } catch (err) {
         console.error('❌ Erreur de chargement du profil :', err);
@@ -110,7 +147,7 @@ export default function Profile() {
     if (authState?.token) {
       load();
     }
-  }, [authState?.token]);
+  }, [authState?.token, viewingOther, viewedUserId]);
 
   if (authState?.loading) {
     return (
@@ -141,9 +178,18 @@ export default function Profile() {
                 // relance du chargement
                 (async () => {
                   try {
-                    await fetchWithAuth('/users/me/stats', { method: 'POST' });
-                    const profile = await fetchWithAuth('/users/me');
-                    setUser(profile as User);
+                    if (!viewingOther) {
+                      await fetchWithAuth('/users/me/stats', {
+                        method: 'POST',
+                      });
+                      const profile = await fetchWithAuth('/users/me');
+                      setUser(profile as User);
+                    } else if (viewedUserId) {
+                      const profile = await fetchWithAuth(
+                        `/users/${viewedUserId}`
+                      );
+                      setUser(profile as User);
+                    }
                     setLoadError(null);
                   } catch (e) {
                     setLoadError('Impossible de charger le profil.');
@@ -197,12 +243,15 @@ export default function Profile() {
               {user.bikeBrand} {user.bikeModel}
             </Text>
           </View>
-          <TouchableOpacity
-            style={{ position: 'absolute', top: 10, right: 20 }}
-            onPress={() => setEditVisible(true)}
-          >
-            <Pencil color="#fff" size={24} />
-          </TouchableOpacity>
+          {!viewingOther && (
+            <TouchableOpacity
+              style={{ position: 'absolute', top: 10, right: 20 }}
+              onPress={() => setEditVisible(true)}
+              accessibilityLabel="Modifier mon profil"
+            >
+              <Pencil color="#fff" size={24} />
+            </TouchableOpacity>
+          )}
 
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Statistiques</Text>
@@ -288,29 +337,35 @@ export default function Profile() {
               </View>
             </Animated.View>
           </View>
-          <SessionByUser userId={user._id} />
+          {/* Only allow deletion for the owner (current viewer = owner).
+              We pass a hint prop `canDelete` for the child to decide whether to render delete actions. */}
+          <SessionByUser userId={user._id} canDelete={!viewingOther} />
 
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={handleLogout}
-            disabled={logoutLoading}
-          >
-            {logoutLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.logoutText}>Se déconnecter</Text>
-            )}
-          </TouchableOpacity>
+          {!viewingOther && (
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogout}
+              disabled={logoutLoading}
+            >
+              {logoutLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.logoutText}>Se déconnecter</Text>
+              )}
+            </TouchableOpacity>
+          )}
 
-          <EditProfileModal
-            visible={editVisible}
-            user={user}
-            onClose={() => setEditVisible(false)}
-            onSaved={(updated) => {
-              setUser((prev) => ({ ...prev, ...(updated || {}) }));
-              setEditVisible(false);
-            }}
-          />
+          {!viewingOther && (
+            <EditProfileModal
+              visible={editVisible}
+              user={user}
+              onClose={() => setEditVisible(false)}
+              onSaved={(updated) => {
+                setUser((prev) => ({ ...prev, ...(updated || {}) }));
+                setEditVisible(false);
+              }}
+            />
+          )}
           <View style={{ height: 40 }} />
         </View>
       </ScrollView>
